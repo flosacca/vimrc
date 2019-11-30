@@ -54,13 +54,11 @@ nn <silent> <leader>w :w<CR>
 
 nn <silent> & :&&<CR>
 nn gs :%s//g<Left><Left>
-nn <leader>s :%s/\<<C-R><C-W>\>//g<Left><Left>
+nn g* :%s/\<<C-R><C-W>\>//g<Left><Left>
 vn <silent> s :call VSub()<CR>
 
-nn <silent> n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
-nn <silent> N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
-nn <silent> * :call CenterAfter('*')<CR>
-nn <silent> # :call CenterAfter('#')<CR>
+nn <silent> <leader>n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
+nn <silent> <leader>N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
 
 " Compile & Run {{{
 nn <silent> <F5> :call Debug()<CR>
@@ -182,6 +180,8 @@ let g:ruby_indent_assignment_style = 'variable'
 let g:tex_flavor = 'latex'
 
 function! FileTypeConfig()
+  se fo-=ro
+
   if index(['cpp', 'c', 'python'], &ft) != -1
     setl ts=4
     setl sw=4
@@ -250,7 +250,6 @@ endf
 "}}}
 
 function! VSub() range
-  echom 'vsub called'
   call inputsave()
   let pat = input('Pattern: ')
   let sub = input('Substitute: ')
