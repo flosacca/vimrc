@@ -20,6 +20,8 @@ mapc!
 nn U <C-R>
 nn <C-Q> <Nop>
 
+nn <silent> & :&&<CR>
+
 nn <C-H> <C-W>h
 nn <C-J> <C-W>j
 nn <C-K> <C-W>k
@@ -27,20 +29,21 @@ nn <C-L> <C-W>l
 
 vn <RightMouse> "+y
 
+nn <silent> n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
+nn <silent> N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
+
 se noto
 se ttimeout
 
 let mapleader=' '
 
-nn <leader>n :call CenterAfter('n')<CR>
-nn <leader>N :call CenterAfter('N')<CR>
 nn <leader>s :%s/\<<C-R><C-W>\>//g<Left><Left>
 
-nn <F5> :call Debug()<CR>
-nn <F6> :call Compile(['-O2'])<CR><CR>
-nn <F7> :call Compile(['-g3'])<CR><CR>
-nn <F8> :call Run()<CR><CR>
-nn <F9> :call Run('call Compile(["-g3"])')<CR><CR>
+nn <silent> <F5> :call Debug()<CR>
+nn <silent> <F6> :call Compile(['-O2'])<CR><CR>
+nn <silent> <F7> :call Compile(['-g3'])<CR><CR>
+nn <silent> <F8> :call Run()<CR><CR>
+nn <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
 
 "se kmp=dvorak
 
@@ -186,15 +189,45 @@ aug END
 " Utils ---------------------- {{{
 
 function! CenterAfter(ncmd)
-  exe 'norm! ' . a:ncmd
+  let s:has_error = 0
+  try
+    exe 'norm! ' . a:ncmd
+  catch /^Vim\%((\a\+)\)\?:E486/
+    echoh ErrorMsg
+    echom substitute(v:exception, '^Vim\%((\a\+)\)\?:', '', '')
+    echoh None
+    let s:has_error = 1
+    return
+  endt
+
   if foldclosed(line('.')) != -1
     norm! zO
   end
   norm! zz
 endf
 
+function! ShowMessage(ncmd)
+  if s:has_error
+    return
+  end
+
+  if a:ncmd ==# 'n'
+    if line(".") != line("''") ? line(".") > line("''") : col(".") > col("''")
+      echo '/' . @/
+    end
+  elseif a:ncmd ==# 'N'
+    if line(".") != line("''") ? line(".") < line("''") : col(".") < col("''")
+      echo '?' . @/
+    end
+  end
+endf
+
 function! InsTexEnv()
   exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
+endf
+
+function! SetAlpha(alpha)
+  call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
 endf
 
 " ---------------------------- }}}
@@ -263,12 +296,10 @@ function! Run(...)
     exe '!ruby "%"'
   elseif &ft == 'tex'
     sil exe '!open "%<.pdf"'
-    echo
   elseif &ft == 'autohotkey'
     exe '!sudo "%"'
   else
     sil exe '!open "%"'
-    echo
   end
 endf
 
@@ -277,7 +308,6 @@ function! Debug()
     if !Make('debug')
       sil exe '!open gdb "%<"'
     end
-    echo
   end
 endf
 
