@@ -14,13 +14,29 @@ se vi+=n~/.viminfo
 
 " Mappings ------------------- {{{
 
-mapc
-mapc!
+" Preparation {{{
+if !exists('g:default_map_cleared')
+  mapc
+  mapc!
+  let g:default_map_cleared = 1
+end
 
+se noto
+se ttimeout
+" }}}
+
+let mapleader=' '
+nn <leader> <Nop>
+
+" Basic {{{
 nn U <C-R>
-nn <C-Q> <Nop>
 
-nn <silent> & :&&<CR>
+nn <C-Q> <Nop>
+for s:cmd in ['x', 'X', 's', 'S']
+  if maparg(s:cmd, 'v') == ''
+    exe 'vn ' . s:cmd . ' <Nop>'
+  end
+endfor
 
 nn <C-H> <C-W>h
 nn <C-J> <C-W>j
@@ -29,21 +45,30 @@ nn <C-L> <C-W>l
 
 vn <RightMouse> "+y
 
+nn <leader>j <C-D>
+nn <leader>k <C-U>
+nn <silent> <leader>q :q<CR>
+nn <silent> <leader>Q :qa<CR>
+nn <silent> <leader>w :w<CR>
+" }}}
+
+nn <silent> & :&&<CR>
+nn gs :%s//g<Left><Left>
+nn <leader>s :%s/\<<C-R><C-W>\>//g<Left><Left>
+vn <silent> s :call VSub()<CR>
+
 nn <silent> n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
 nn <silent> N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
+nn <silent> * :call CenterAfter('*')<CR>
+nn <silent> # :call CenterAfter('#')<CR>
 
-se noto
-se ttimeout
-
-let mapleader=' '
-
-nn <leader>s :%s/\<<C-R><C-W>\>//g<Left><Left>
-
+" Compile & Run {{{
 nn <silent> <F5> :call Debug()<CR>
 nn <silent> <F6> :call Compile(['-O2'])<CR><CR>
 nn <silent> <F7> :call Compile(['-g3'])<CR><CR>
 nn <silent> <F8> :call Run()<CR><CR>
 nn <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
+" }}}
 
 "se kmp=dvorak
 
@@ -172,7 +197,7 @@ function! FileTypeConfig()
     setl nocul
     setl nocuc
     setl wrap
-    nn <F5> :call InsTexEnv()<CR>
+    nn <F5> :call InsertTeXEnv()<CR>
     im <F5> <Esc><F5>a
   end
 endf
@@ -188,6 +213,7 @@ aug END
 
 " Utils ---------------------- {{{
 
+" Center after search {{{
 function! CenterAfter(ncmd)
   let s:has_error = 0
   try
@@ -221,13 +247,23 @@ function! ShowMessage(ncmd)
     end
   end
 endf
+"}}}
 
-function! InsTexEnv()
-  exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
+function! VSub() range
+  echom 'vsub called'
+  call inputsave()
+  let pat = input('Pattern: ')
+  let sub = input('Substitute: ')
+  call inputrestore()
+  exe '''<,''>s/\%V\%(' . pat . '\)/' . sub . '/g'
 endf
 
 function! SetAlpha(alpha)
   call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
+endf
+
+function! InsertTeXEnv()
+  exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
 endf
 
 " ---------------------------- }}}
