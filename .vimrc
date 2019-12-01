@@ -76,17 +76,21 @@ nn <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
 
 call plug#begin('~/.vim/plugged')
 
-Plug 'flazz/vim-colorschemes'
-Plug 'morhetz/gruvbox'
-Plug 'itchyny/lightline.vim'
-Plug 'scrooloose/nerdtree'
-Plug 'gko/vim-coloresque'
+Plug 'danro/rename.vim'
 
 Plug 'vim-ruby/vim-ruby'
 
+Plug 'flazz/vim-colorschemes'
+Plug 'morhetz/gruvbox'
+Plug 'gko/vim-coloresque'
+Plug 'itchyny/lightline.vim'
+Plug 'scrooloose/nerdtree'
+
+Plug 'vim-scripts/tComment'
 Plug 'tpope/vim-surround'
-Plug 'scrooloose/nerdcommenter'
+Plug 'easymotion/vim-easymotion'
 Plug 'mattn/emmet-vim'
+Plug 'tpope/vim-rails'
 
 call plug#end()
 
