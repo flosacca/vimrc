@@ -49,7 +49,7 @@ nn <leader>j <C-D>
 nn <leader>k <C-U>
 nn <silent> <leader>q :q<CR>
 nn <silent> <leader>Q :qa<CR>
-nn <silent> <leader>w :w<CR>
+nn <silent> <leader>w :up<CR>
 " }}}
 
 nn <silent> & :&&<CR>
@@ -156,14 +156,14 @@ if has('gui_running')
     au GUIEnter * sim ~x
   aug END
 
-else
-  if has('win32') || has('win64')
-    se nocuc
-    se nocul
-    let use_gui_colors = 0
-  end
+elseif has('win32') || has('win64')
+  let use_gui_colors = 0
+  se nocuc
+  se nocul
+  let lightline = { 'colorscheme': 'nord' }
 
-  if exists('+termguicolors')
+else
+  if has('termguicolors')
     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
     se tgc
@@ -172,16 +172,18 @@ else
   end
 end
 
+if !exists('lightline')
+  let lightline = { 'colorscheme': 'gruvbox' }
+end
+
 if use_gui_colors
   let gruvbox_italic = 0
   colo gruvbox
   se bg=dark
-  let lightline = { 'colorscheme': 'gruvbox' }
 
 else
   se t_Co=256
   colo desert
-  let lightline = { 'colorscheme': 'selenized_dark' }
 end
 
 " ---------------------------- }}}
