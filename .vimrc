@@ -12,13 +12,13 @@ se vi+=n~/.viminfo
 
 " ---------------------------- }}}
 
-" Mappings ------------------- {{{
+" Global Mappings ------------ {{{
 
 " Preparation {{{
-if !exists('g:default_map_cleared')
+if !exists('default_map_cleared')
   mapc
   mapc!
-  let g:default_map_cleared = 1
+  let default_map_cleared = 1
 end
 
 se noto
@@ -60,13 +60,29 @@ vn <silent> s :call VSub()<CR>
 nn <silent> <leader>n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
 nn <silent> <leader>N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
 
-" Compile & Run {{{
-nn <silent> <F5> :call Debug()<CR>
-nn <silent> <F6> :call Compile(['-O2'])<CR><CR>
-nn <silent> <F7> :call Compile(['-g3'])<CR><CR>
-nn <silent> <F8> :call Run()<CR><CR>
-nn <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
+nm gS <Plug>TComment_gcc
+
+" EasyMotion {{{
+map gh <Plug>(easymotion-fl)
+map gH <Plug>(easymotion-Fl)
+map gy <Plug>(easymotion-tl)
+map gY <Plug>(easymotion-Tl)
+map gw <Plug>(easymotion-wl)
+map gb <Plug>(easymotion-bl)
+
+map gj <Plug>(easymotion-j)
+map gk <Plug>(easymotion-k)
+nm gl <Plug>(easymotion-overwin-line)
+
+let EasyMotion_re_line_anywhere = '\v(\s|^)\zs\S'
+map gW <Plug>(easymotion-lineforward)
+map gB <Plug>(easymotion-linebackward)
 " }}}
+
+nn <silent> <F3> :NERDTreeToggle<CR>
+
+nn <silent> <F8> :call Run()<CR><CR>
+nn <silent> <F9> :up<CR>:call Run()<CR><CR>
 
 "se kmp=dvorak
 
@@ -104,9 +120,12 @@ aug config_NERDTree
   au BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | q | end
 aug END
 
-let g:NERDTreeDirArrowExpandable = '+'
-let g:NERDTreeDirArrowCollapsible = '-'
+let NERDTreeDirArrowExpandable = '+'
+let NERDTreeDirArrowCollapsible = '-'
+let NERDTreeIgnore = ['^ntuser.*\c']
 " }}}
+
+let EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
 
 " ---------------------------- }}}
 
@@ -126,7 +145,7 @@ aug move_help_window
   au BufEnter * if &bt == 'help' | winc L | end
 aug END
 
-let g:use_gui_colors = 1
+let use_gui_colors = 1
 
 if has('gui_running')
   se go=
@@ -141,7 +160,7 @@ else
   if has('win32') || has('win64')
     se nocuc
     se nocul
-    let g:use_gui_colors = 0
+    let use_gui_colors = 0
   end
 
   if exists('+termguicolors')
@@ -149,20 +168,20 @@ else
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
     se tgc
   else
-    let g:use_gui_colors = 0
+    let use_gui_colors = 0
   end
 end
 
-if g:use_gui_colors
-  let g:gruvbox_italic = 0
+if use_gui_colors
+  let gruvbox_italic = 0
   colo gruvbox
   se bg=dark
-  let g:lightline = { 'colorscheme': 'gruvbox' }
+  let lightline = { 'colorscheme': 'gruvbox' }
 
 else
   se t_Co=256
   colo desert
-  let g:lightline = { 'colorscheme': 'selenized_dark' }
+  let lightline = { 'colorscheme': 'selenized_dark' }
 end
 
 " ---------------------------- }}}
@@ -179,12 +198,12 @@ se et
 
 let c_no_curly_error = 1
 
-let g:ruby_indent_assignment_style = 'variable'
+let ruby_indent_assignment_style = 'variable'
 
-let g:tex_flavor = 'latex'
+let tex_flavor = 'latex'
 
 function! FileTypeConfig()
-  se fo-=ro
+  setl fo-=ro
 
   if index(['cpp', 'c', 'python'], &ft) != -1
     setl ts=4
@@ -194,6 +213,10 @@ function! FileTypeConfig()
   if index(['cpp', 'c'], &ft) != -1
     setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
     setl noet
+    nn <buffer> <silent> <F5> :call Debug()<CR>
+    nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR><CR>
+    nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR><CR>
+    nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
   end
 
   if &ft == 'tex'
@@ -201,8 +224,8 @@ function! FileTypeConfig()
     setl nocul
     setl nocuc
     setl wrap
-    nn <F5> :call InsertTeXEnv()<CR>
-    im <F5> <Esc><F5>a
+    nn <buffer> <silent> <F5> :call InsertTeXEnv()<CR>
+    im <buffer> <silent> <F5> <C-O><F5>
   end
 endf
 
