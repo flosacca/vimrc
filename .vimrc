@@ -15,23 +15,24 @@ se vi+=n~/.viminfo
 " Global Mappings ------------ {{{
 
 " Preparation {{{
-if !exists('default_map_cleared')
+if !exists('g:default_map_cleared')
   mapc
   mapc!
-  let default_map_cleared = 1
+  let g:default_map_cleared = 1
 end
 
 se noto
 se ttimeout
 " }}}
 
-let mapleader=' '
-nn <leader> <Nop>
+let g:mapleader=' '
 
 " Basic {{{
 nn U <C-R>
 
+nn <Space> <Nop>
 nn <C-Q> <Nop>
+
 for s:cmd in ['x', 'X', 's', 'S']
   if maparg(s:cmd, 'v') == ''
     exe 'vn ' . s:cmd . ' <Nop>'
@@ -45,11 +46,11 @@ nn <C-L> <C-W>l
 
 vn <RightMouse> "+y
 
-nn <leader>j <C-D>
-nn <leader>k <C-U>
-nn <silent> <leader>q :q<CR>
-nn <silent> <leader>Q :qa<CR>
-nn <silent> <leader>w :up<CR>
+nn <Space>j <C-D>
+nn <Space>k <C-U>
+nn <silent> <Space>q :q<CR>
+nn <silent> <Space>Q :qa<CR>
+nn <silent> <Space>w :up<CR>
 " }}}
 
 nn <silent> & :&&<CR>
@@ -57,26 +58,52 @@ nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-R><C-W>\>//g<Left><Left>
 vn <silent> s :call VSub()<CR>
 
-nn <silent> <leader>n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
-nn <silent> <leader>N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
+nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
+nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
 
 nm gS <Plug>TComment_gcc
 
 " EasyMotion {{{
-map gh <Plug>(easymotion-fl)
-map gH <Plug>(easymotion-Fl)
-map gy <Plug>(easymotion-tl)
-map gY <Plug>(easymotion-Tl)
-map gw <Plug>(easymotion-wl)
-map gb <Plug>(easymotion-bl)
-
 map gj <Plug>(easymotion-j)
 map gk <Plug>(easymotion-k)
-nm gl <Plug>(easymotion-overwin-line)
+nm go <Plug>(easymotion-overwin-line)
 
-let EasyMotion_re_line_anywhere = '\v(\s|^)\zs\S'
-map gW <Plug>(easymotion-lineforward)
-map gB <Plug>(easymotion-linebackward)
+" Within line {{{
+function! MultibyteToggle(...)
+  if a:0
+    let enable = a:1
+  elseif exists('g:multibyte_motion')
+    let enable = !g:multibyte_motion
+  else
+    return
+  end
+  let g:multibyte_motion = l:enable
+
+  if !l:enable
+    let g:EasyMotion_re_line_anywhere = '\v(\s|^)\zs\S'
+    map gh <Plug>(easymotion-bl)
+    map gl <Plug>(easymotion-wl)
+    map gH <Plug>(easymotion-linebackward)
+    map gL <Plug>(easymotion-lineforward)
+
+  else
+    let g:EasyMotion_re_line_anywhere = '[^\x00-\x7f]'
+    map gh <Plug>(easymotion-linebackward)
+    map gl <Plug>(easymotion-lineforward)
+    map gH <Nop>
+    map gL <Nop>
+  end
+endf
+
+call MultibyteToggle(0)
+" }}}
+
+nn <silent> g<Space> :call MultibyteToggle()<CR>
+
+map gb <Plug>(easymotion-b)
+map gw <Plug>(easymotion-w)
+map gB <Plug>(easymotion-ge)
+map gW <Plug>(easymotion-e)
 " }}}
 
 nn <silent> <F3> :NERDTreeToggle<CR>
@@ -120,12 +147,12 @@ aug config_NERDTree
   au BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | q | end
 aug END
 
-let NERDTreeDirArrowExpandable = '+'
-let NERDTreeDirArrowCollapsible = '-'
-let NERDTreeIgnore = ['^ntuser.*\c']
+let g:NERDTreeDirArrowExpandable = '+'
+let g:NERDTreeDirArrowCollapsible = '-'
+let g:NERDTreeIgnore = ['^ntuser.*\c']
 " }}}
 
-let EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
+let g:EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
 
 " ---------------------------- }}}
 
@@ -145,7 +172,7 @@ aug move_help_window
   au BufEnter * if &bt == 'help' | winc L | end
 aug END
 
-let use_gui_colors = 1
+let g:use_gui_colors = 1
 
 if has('gui_running')
   se go=
@@ -157,10 +184,10 @@ if has('gui_running')
   aug END
 
 elseif has('win32') || has('win64')
-  let use_gui_colors = 0
+  let g:use_gui_colors = 0
   se nocuc
   se nocul
-  let lightline = { 'colorscheme': 'nord' }
+  let g:lightline = { 'colorscheme': 'nord' }
 
 else
   if has('termguicolors')
@@ -168,16 +195,16 @@ else
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
     se tgc
   else
-    let use_gui_colors = 0
+    let g:use_gui_colors = 0
   end
 end
 
-if !exists('lightline')
-  let lightline = { 'colorscheme': 'gruvbox' }
+if !exists('g:lightline')
+  let g:lightline = { 'colorscheme': 'gruvbox' }
 end
 
 if use_gui_colors
-  let gruvbox_italic = 0
+  let g:gruvbox_italic = 0
   colo gruvbox
   se bg=dark
 
@@ -198,11 +225,11 @@ se et
 
 " FileType-Specific ---------- {{{
 
-let c_no_curly_error = 1
+let g:c_no_curly_error = 1
 
-let ruby_indent_assignment_style = 'variable'
+let g:ruby_indent_assignment_style = 'variable'
 
-let tex_flavor = 'latex'
+let g:tex_flavor = 'latex'
 
 function! FileTypeConfig()
   setl fo-=ro
