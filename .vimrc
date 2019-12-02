@@ -10,6 +10,10 @@ se enc=utf-8
 se rtp+=~/.vim
 se vi+=n~/.viminfo
 
+let s:win = has('win32') || has('win64')
+let s:gui = has('gui_running')
+let s:win_gui = s:win && s:gui
+
 " ---------------------------- }}}
 
 " Global Mappings ------------ {{{
@@ -23,6 +27,7 @@ end
 
 se noto
 se ttimeout
+se ttm=0
 " }}}
 
 let g:mapleader=' '
@@ -106,10 +111,15 @@ map gB <Plug>(easymotion-ge)
 map gW <Plug>(easymotion-e)
 " }}}
 
-nn <silent> <F3> :NERDTreeToggle<CR>
+nn <silent> <Space>t :NERDTreeToggle<CR>
 
-nn <silent> <F8> :call Run()<CR><CR>
-nn <silent> <F9> :up<CR>:call Run()<CR><CR>
+if s:win_gui
+  nn <silent> <F8> :call Run()<CR><CR>
+  nn <silent> <F9> :up<CR>:call Run()<CR><CR>
+else
+  nn <silent> <F8> :call Run()<CR>
+  nn <silent> <F9> :up<CR>:call Run()<CR>
+end
 
 "se kmp=dvorak
 
@@ -131,6 +141,7 @@ Plug 'scrooloose/nerdtree'
 
 Plug 'vim-scripts/tComment'
 Plug 'tpope/vim-surround'
+Plug 'tpope/vim-abolish'
 Plug 'easymotion/vim-easymotion'
 Plug 'mattn/emmet-vim'
 Plug 'tpope/vim-rails'
@@ -144,7 +155,6 @@ aug config_NERDTree
   au!
   au StdinReadPre * let s:std_in = 1
   au VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | end
-  au BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | q | end
 aug END
 
 let g:NERDTreeDirArrowExpandable = '+'
@@ -174,7 +184,7 @@ aug END
 
 let g:use_gui_colors = 1
 
-if has('gui_running')
+if s:gui
   se go=
   se gfn=ubuntu_mono:h14
 
@@ -183,7 +193,7 @@ if has('gui_running')
     au GUIEnter * sim ~x
   aug END
 
-elseif has('win32') || has('win64')
+elseif s:win
   let g:use_gui_colors = 0
   se nocuc
   se nocul
@@ -243,9 +253,15 @@ function! FileTypeConfig()
     setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
     setl noet
     nn <buffer> <silent> <F5> :call Debug()<CR>
-    nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR><CR>
-    nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR><CR>
-    nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
+    if s:win_gui
+      nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR><CR>
+      nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR><CR>
+      nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
+    else
+      nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR>
+      nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR>
+      nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR>
+    end
   end
 
   if &ft == 'tex'
