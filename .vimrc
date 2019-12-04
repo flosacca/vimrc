@@ -30,9 +30,7 @@ se ttimeout
 se ttm=0
 " }}}
 
-let g:mapleader=' '
-
-" Basic {{{
+" Basic keys {{{
 nn U <C-R>
 
 nn <Space> <Nop>
@@ -44,34 +42,56 @@ for s:cmd in ['x', 'X', 's', 'S']
   end
 endfor
 
+vn <RightMouse> "*y
+
+ono ir i]
+vn ir i]
+ono ar a]
+vn ar a]
+ono ia i>
+vn ia i>
+ono aa a>
+vn aa a>
+
 nn <C-H> <C-W>h
 nn <C-J> <C-W>j
 nn <C-K> <C-W>k
 nn <C-L> <C-W>l
+" }}}
 
-vn <RightMouse> "+y
-
+" Space leading keys {{{
 nn <Space>j <C-D>
 nn <Space>k <C-U>
 nn <silent> <Space>q :q<CR>
 nn <silent> <Space>Q :qa<CR>
 nn <silent> <Space>w :up<CR>
+nn <silent> <Space>y :call Clip()<CR>
 " }}}
 
+" Search & Replace {{{
 nn <silent> & :&&<CR>
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-R><C-W>\>//g<Left><Left>
 vn <silent> s :call VSub()<CR>
 
-nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowMessage('n')<CR>
-nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowMessage('N')<CR>
+nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
+nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
+" }}}
 
-nm gS <Plug>TComment_gcc
+" Plugins {{{
 
 " EasyMotion {{{
+
 map gj <Plug>(easymotion-j)
 map gk <Plug>(easymotion-k)
 nm go <Plug>(easymotion-overwin-line)
+
+nn <silent> g<Space> :call MultibyteToggle()<CR>
+
+map gb <Plug>(easymotion-b)
+map gw <Plug>(easymotion-w)
+map gB <Plug>(easymotion-ge)
+map gW <Plug>(easymotion-e)
 
 " Within line {{{
 function! MultibyteToggle(...)
@@ -103,15 +123,13 @@ endf
 call MultibyteToggle(0)
 " }}}
 
-nn <silent> g<Space> :call MultibyteToggle()<CR>
-
-map gb <Plug>(easymotion-b)
-map gw <Plug>(easymotion-w)
-map gB <Plug>(easymotion-ge)
-map gW <Plug>(easymotion-e)
 " }}}
 
+nm gS <Plug>TComment_gcc
+
 nn <silent> <Space>t :NERDTreeToggle<CR>
+
+" }}}
 
 if s:win_gui
   nn <silent> <F8> :call Run()<CR><CR>
@@ -120,6 +138,8 @@ else
   nn <silent> <F8> :call Run()<CR>
   nn <silent> <F9> :up<CR>:call Run()<CR>
 end
+
+let g:mapleader=' '
 
 "se kmp=dvorak
 
@@ -284,63 +304,36 @@ aug END
 " Functions ------------------ {{{
 
 " Utils ---------------------- {{{
-
-" Center after search {{{
-function! CenterAfter(ncmd)
-  let s:has_error = 0
+function! TryExec(cmd, ...)
+  let s:exception = ''
+  let pat = a:0 > 1 ? a:2 : '.*'
   try
-    exe 'norm! ' . a:ncmd
-  catch /^Vim\%((\a\+)\)\?:E486/
+    exe a:cmd
+  catch
+    if v:exception !~# '^Vim\%((\a\+)\)\?:E' . pat
+      echoe v:expcetion
+    end
+    let s:exception = v:exception
     echoh ErrorMsg
     echom substitute(v:exception, '^Vim\%((\a\+)\)\?:', '', '')
     echoh None
-    let s:has_error = 1
-    return
   endt
-
-  if foldclosed(line('.')) != -1
-    norm! zO
-  end
-  norm! zz
 endf
 
-function! ShowMessage(ncmd)
-  if s:has_error
-    return
-  end
-
-  if a:ncmd ==# 'n'
-    if line(".") != line("''") ? line(".") > line("''") : col(".") > col("''")
-      echo '/' . @/
-    end
-  elseif a:ncmd ==# 'N'
-    if line(".") != line("''") ? line(".") < line("''") : col(".") < col("''")
-      echo '?' . @/
-    end
-  end
-endf
-"}}}
-
-function! VSub() range
+function! Input(prompt)
   call inputsave()
-  let pat = input('Pattern: ')
-  let sub = input('Substitute: ')
+  let value = input(a:prompt)
   call inputrestore()
-  exe '''<,''>s/\%V\%(' . pat . '\)/' . sub . '/g'
+  redr
+  return value
 endf
 
 function! SetAlpha(alpha)
   call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
 endf
-
-function! InsertTeXEnv()
-  exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
-endf
-
-" ---------------------------- }}}
+" }}}
 
 " Compile & Run -------------- {{{
-
 function! Make(...)
   for dir in ['.', '..']
     if filereadable(dir . '/Makefile')
@@ -370,7 +363,7 @@ function! Compile(...)
       end
       if a:0
         for flag in a:1
-          if flag =~ '-std'
+          if flag =~# '-std'
             let flags = []
             break
           end
@@ -417,7 +410,49 @@ function! Debug()
     end
   end
 endf
-
 " ---------------------------- }}}
+
+function! CenterAfter(ncmd)
+  call TryExec('norm! ' . a:ncmd, '486')
+  if s:exception != ''
+    return
+  end
+  if foldclosed(line('.')) != -1
+    norm! zO
+  end
+  norm! zz
+endf
+
+function! ShowSearch(ncmd)
+  if s:exception != ''
+    return
+  end
+  if a:ncmd ==# 'n'
+    if line(".") != line("''") ? line(".") > line("''") : col(".") > col("''")
+      echo '/' . @/
+    end
+  elseif a:ncmd ==# 'N'
+    if line(".") != line("''") ? line(".") < line("''") : col(".") < col("''")
+      echo '?' . @/
+    end
+  end
+endf
+
+function! VSub() range
+  let pat = Input('Pattern: ')
+  let sub = Input('Substitute: ')
+  call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
+endf
+
+function! Clip()
+  %y *
+  if @*[-1:] == "\n"
+    let @* = @*[:-2]
+  end
+endf
+
+function! InsertTeXEnv()
+  exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
+endf
 
 " ---------------------------- }}}
