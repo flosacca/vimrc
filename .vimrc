@@ -155,7 +155,7 @@ Plug 'vim-ruby/vim-ruby'
 
 Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
-Plug 'gko/vim-coloresque'
+Plug 'flosacca/vim-coloresque'
 Plug 'itchyny/lightline.vim'
 Plug 'scrooloose/nerdtree'
 
