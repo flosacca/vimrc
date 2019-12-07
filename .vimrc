@@ -306,7 +306,7 @@ aug END
 " Utils ---------------------- {{{
 function! TryExec(cmd, ...)
   let s:exception = ''
-  let pat = a:0 > 1 ? a:2 : '.*'
+  let pat = a:0 >= 2 ? a:2 : '.*'
   try
     exe a:cmd
   catch
@@ -382,6 +382,21 @@ function! Compile(...)
   end
 endf
 
+" WinOpen(name, silent = 1, admin = 0)
+function! WinOpen(name, ...)
+  if !s:win
+    return
+  end
+  " Call WScript.Run with extern script files
+  let method = a:0 >= 3 && a:3 ? 'sudo' : 'open'
+  let prefix = '!' . method . ' '
+  if a:0 >= 2 && !a:2
+    exe prefix . a:name
+  else
+    sil exe prefix . a:name
+  end
+endf
+
 function! Run(...)
   if a:0
     exe a:1
@@ -395,18 +410,22 @@ function! Run(...)
   elseif &ft == 'ruby'
     exe '!ruby "%"'
   elseif &ft == 'tex'
-    sil exe '!open "%<.pdf"'
+    call WinOpen('"%<.pdf"')
   elseif &ft == 'autohotkey'
-    exe '!sudo "%"'
+    call WinOpen('"%"', 0, 1)
   else
-    sil exe '!open "%"'
+    if s:win
+      call WinOpen('"%"')
+    else
+      exe '!"./%"'
+    end
   end
 endf
 
 function! Debug()
   if &ft == 'cpp' || &ft == 'c'
     if !Make('debug')
-      sil exe '!open gdb "%<"'
+      call WinOpen('gdb "%<"')
     end
   end
 endf
