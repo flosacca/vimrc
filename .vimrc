@@ -60,8 +60,8 @@ nn <C-L> <C-W>l
 " }}}
 
 " Space leading keys {{{
-nn <Space>j <C-D>
-nn <Space>k <C-U>
+no <Space>j <C-D>
+no <Space>k <C-U>
 nn <silent> <Space>q :q<CR>
 nn <silent> <Space>Q :qa<CR>
 nn <silent> <Space>w :up<CR>
@@ -264,24 +264,31 @@ let g:tex_flavor = 'latex'
 function! FileTypeConfig()
   setl fo-=ro
 
-  if index(['cpp', 'c', 'python'], &ft) != -1
+  if index(['cpp', 'c', 'make', 'python'], &ft) != -1
     setl ts=4
     setl sw=4
   end
 
-  if index(['cpp', 'c'], &ft) != -1
-    setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
+  if index(['cpp', 'c', 'make'], &ft) != -1
     setl noet
-    nn <buffer> <silent> <F5> :call Debug()<CR>
-    if s:win_gui
-      nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR><CR>
-      nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR><CR>
-      nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR><CR>
-    else
-      nn <buffer> <silent> <F6> :call Compile(['-O2'])<CR>
-      nn <buffer> <silent> <F7> :call Compile(['-g3'])<CR>
-      nn <buffer> <silent> <F9> :call Run('call Compile(["-g3"])')<CR>
-    end
+  end
+
+  if index(['cpp', 'c'], &ft) != -1
+
+    setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
+
+    let f = [['F5', 'Debug()']]
+    call add(f, ['F6', 'Compile(["-O2"])'])
+    call add(f, ['F7', 'Compile(["-g3"])'])
+    call add(f, ['F9', "Run('call Compile([\"-g3\"])')"])
+
+    for i in range(4)
+      let cmd = printf('nn <buffer> <silent> <%s> :call %s<CR>', f[i][0], f[i][1])
+      if s:win_gui && f[i][0] != 'F5'
+        let cmd .= '<CR>'
+      end
+      exe cmd
+    endfor
   end
 
   if &ft == 'tex'
@@ -306,7 +313,7 @@ aug END
 " Utils ---------------------- {{{
 function! TryExec(cmd, ...)
   let s:exception = ''
-  let pat = a:0 >= 2 ? a:2 : '.*'
+  let pat = a:0 >= 1 ? a:1 : '.*'
   try
     exe a:cmd
   catch
@@ -388,9 +395,9 @@ function! WinOpen(name, ...)
     return
   end
   " Call WScript.Run with extern script files
-  let method = a:0 >= 3 && a:3 ? 'sudo' : 'open'
+  let method = a:0 >= 2 && a:2 ? 'sudo' : 'open'
   let prefix = '!' . method . ' '
-  if a:0 >= 2 && !a:2
+  if a:0 >= 1 && !a:1
     exe prefix . a:name
   else
     sil exe prefix . a:name
