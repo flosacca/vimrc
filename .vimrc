@@ -66,6 +66,7 @@ nn <silent> <Space>q :q<CR>
 nn <silent> <Space>Q :qa<CR>
 nn <silent> <Space>w :up<CR>
 nn <silent> <Space>y :call Clip()<CR>
+nn <silent> <Space>p :let &paste=!&paste<CR>
 " }}}
 
 " Search & Replace {{{
@@ -253,7 +254,12 @@ se et
 
 " ---------------------------- }}}
 
-" FileType-Specific ---------- {{{
+" File type specific --------- {{{
+
+aug add_file_type
+  au!
+  au BufRead *.pgf se ft=tex
+aug END
 
 let g:c_no_curly_error = 1
 
@@ -277,17 +283,13 @@ function! FileTypeConfig()
 
     setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
 
-    let f = [['F5', 'Debug()']]
-    call add(f, ['F6', 'Compile(["-O2"])'])
-    call add(f, ['F7', 'Compile(["-g3"])'])
-    call add(f, ['F9', "Run('call Compile([\"-g3\"])')"])
+    let f = [['<F5>', 'Debug()']]
+    call add(f, ['<F6>', 'Compile(["-O2"])'])
+    call add(f, ['<F7>', 'Compile(["-g3"])'])
+    call add(f, ['<F9>', "Run('call Compile([\"-g3\"])')"])
 
     for i in range(4)
-      let cmd = printf('nn <buffer> <silent> <%s> :call %s<CR>', f[i][0], f[i][1])
-      if s:win_gui && f[i][0] != 'F5'
-        let cmd .= '<CR>'
-      end
-      exe cmd
+      call LSMap('nn', f[i][0], f[i][1], f[i][0] != '<F5>')
     endfor
   end
 
@@ -296,8 +298,11 @@ function! FileTypeConfig()
     setl nocul
     setl nocuc
     setl wrap
-    nn <buffer> <silent> <F5> :call InsertTeXEnv()<CR>
+
+    call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     im <buffer> <silent> <F5> <C-O><F5>
+    call LSMap('nn', '<F7>', 'Compile()', 1)
+    call LSMap('nn', '<F9>', "Run('call Compile()')", 1)
   end
 endf
 
@@ -335,10 +340,34 @@ function! Input(prompt)
   return value
 endf
 
+function! LSMap(type, key, func, expect_pause)
+  let cmd = printf('%s <buffer> <silent> %s :call %s<CR>', a:type, a:key, a:func)
+  if a:expect_pause && s:win_gui
+    exe cmd . '<CR>'
+  else
+    exe cmd
+  end
+endf
+" }}}
+
+" WinOpen(name, silent = 1, admin = 0)
+function! WinOpen(name, ...)
+  if !s:win
+    return
+  end
+  " Call WScript.Run with extern script files
+  let method = a:0 >= 2 && a:2 ? 'sudo' : 'open'
+  let prefix = '!' . method . ' '
+  if a:0 >= 1 && !a:1
+    exe prefix . a:name
+  else
+    sil exe prefix . a:name
+  end
+endf
+
 function! SetAlpha(alpha)
   call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
 endf
-" }}}
 
 " Compile & Run -------------- {{{
 function! Make(...)
@@ -389,21 +418,6 @@ function! Compile(...)
   end
 endf
 
-" WinOpen(name, silent = 1, admin = 0)
-function! WinOpen(name, ...)
-  if !s:win
-    return
-  end
-  " Call WScript.Run with extern script files
-  let method = a:0 >= 2 && a:2 ? 'sudo' : 'open'
-  let prefix = '!' . method . ' '
-  if a:0 >= 1 && !a:1
-    exe prefix . a:name
-  else
-    sil exe prefix . a:name
-  end
-endf
-
 function! Run(...)
   if a:0
     exe a:1
@@ -438,6 +452,7 @@ function! Debug()
 endf
 " ---------------------------- }}}
 
+" Commands {{{
 function! CenterAfter(ncmd)
   call TryExec('norm! ' . a:ncmd, '486')
   if s:exception != ''
@@ -480,5 +495,6 @@ endf
 function! InsertTeXEnv()
   exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
 endf
+" }}}
 
 " ---------------------------- }}}
