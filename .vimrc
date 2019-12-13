@@ -352,16 +352,19 @@ endf
 
 " WinOpen(name, silent = 1, admin = 0)
 function! WinOpen(name, ...)
-  if !s:win
-    return
+  " Call wscript.run with extern script files
+  let method = a:0 < 2 || !a:2 ? 'open' : 'sudo'
+  if s:win
+    let prefix = printf('!%s ', method)
+  else
+    " For msys2 compability
+    let prefix = printf('!ws.sh %s ', method)
   end
-  " Call WScript.Run with extern script files
-  let method = a:0 >= 2 && a:2 ? 'sudo' : 'open'
-  let prefix = '!' . method . ' '
   if a:0 >= 1 && !a:1
     exe prefix . a:name
   else
     sil exe prefix . a:name
+    redr!
   end
 endf
 
