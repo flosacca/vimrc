@@ -65,7 +65,7 @@ no <Space>k <C-U>
 nn <silent> <Space>q :q<CR>
 nn <silent> <Space>Q :qa<CR>
 nn <silent> <Space>w :up<CR>
-nn <silent> <Space>y :call Clip()<CR>
+nn <silent> <Space>y :call ClipAll()<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
 " }}}
 
@@ -94,35 +94,11 @@ map gw <Plug>(easymotion-w)
 map gB <Plug>(easymotion-ge)
 map gW <Plug>(easymotion-e)
 
-" Within line {{{
-function! MultibyteToggle(...)
-  if a:0
-    let enable = a:1
-  elseif exists('g:multibyte_motion')
-    let enable = !g:multibyte_motion
-  else
-    return
-  end
-  let g:multibyte_motion = l:enable
-
-  if !l:enable
-    let g:EasyMotion_re_line_anywhere = '\v(\s|^)\zs\S'
-    map gh <Plug>(easymotion-bl)
-    map gl <Plug>(easymotion-wl)
-    map gH <Plug>(easymotion-linebackward)
-    map gL <Plug>(easymotion-lineforward)
-
-  else
-    let g:EasyMotion_re_line_anywhere = '[^\x00-\x7f]'
-    map gh <Plug>(easymotion-linebackward)
-    map gl <Plug>(easymotion-lineforward)
-    map gH <Nop>
-    map gL <Nop>
-  end
-endf
-
-call MultibyteToggle(0)
-" }}}
+let g:EasyMotion_re_line_anywhere = '.'
+map gh <Plug>(easymotion-bl)
+map gl <Plug>(easymotion-wl)
+map gH <Plug>(easymotion-linebackward)
+map gL <Plug>(easymotion-lineforward)
 
 " }}}
 
@@ -207,7 +183,7 @@ let g:use_gui_colors = 1
 
 if s:gui
   se go=
-  se gfn=ubuntu_mono:h14
+  se gfn=ubuntu_mono:h16
 
   aug maximize_gui
     au!
@@ -234,7 +210,7 @@ if !exists('g:lightline')
   let g:lightline = { 'colorscheme': 'gruvbox' }
 end
 
-if use_gui_colors
+if g:use_gui_colors
   let g:gruvbox_italic = 0
   colo gruvbox
   se bg=dark
@@ -336,7 +312,6 @@ function! Input(prompt)
   call inputsave()
   let value = input(a:prompt)
   call inputrestore()
-  redr
   return value
 endf
 
@@ -364,7 +339,9 @@ function! WinOpen(name, ...)
     exe prefix . a:name
   else
     sil exe prefix . a:name
-    redr!
+    if !s:win_gui
+      redr!
+    end
   end
 endf
 
@@ -485,10 +462,11 @@ endf
 function! VSub() range
   let pat = Input('Pattern: ')
   let sub = Input('Substitute: ')
+  redr
   call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
 endf
 
-function! Clip()
+function! ClipAll()
   %y *
   if @*[-1:] == "\n"
     let @* = @*[:-2]
