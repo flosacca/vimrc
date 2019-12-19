@@ -19,12 +19,6 @@ let s:win_gui = s:win && s:gui
 " Global Mappings ------------ {{{
 
 " Preparation {{{
-if !exists('g:default_map_cleared')
-  mapc
-  mapc!
-  let g:default_map_cleared = 1
-end
-
 se noto
 se ttimeout
 se ttm=0
