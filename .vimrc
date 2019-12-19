@@ -129,6 +129,8 @@ call plug#begin('~/.vim/plugged')
 Plug 'danro/rename.vim'
 
 Plug 'vim-ruby/vim-ruby'
+Plug 'pangloss/vim-javascript'
+Plug 'chemzqm/wxapp.vim'
 
 Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
