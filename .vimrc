@@ -5,6 +5,7 @@ se bs=2
 se wak=no
 se acd
 se noswf
+se ffs=unix,dos
 se enc=utf-8
 
 se rtp+=~/.vim
@@ -253,7 +254,7 @@ function! FileTypeConfig()
 
   if index(['cpp', 'c'], &ft) != -1
 
-    setl cino=:0,g0,N-s,(0,ws,Ws,j1,J1
+    setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
 
     let f = [['<F5>', 'Debug()']]
     call add(f, ['<F6>', 'Compile(["-O2"])'])
@@ -367,9 +368,12 @@ function! Compile(...)
   up
   if &ft == 'cpp' || &ft == 'c'
     if !Make()
-      let basic_flags = ['-posix', '-Wl,--stack=268435456']
+      let basic_flags = ['-posix']
+      if s:win
+        let basic_flags += ['-Wl,--stack=268435456']
+      end
       if &ft == 'cpp'
-        let flags = ['-std=c++11']
+        let flags = ['-std=c++14']
       else
         let flags = ['-std=c99']
       end
