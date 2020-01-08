@@ -15,27 +15,33 @@ let s:win = has('win32') || has('win64')
 let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
 
+se noto
+se ttimeout
+se ttm=0
+
 " ---------------------------- }}}
 
 " Global Mappings ------------ {{{
 
-" Preparation {{{
-se noto
-se ttimeout
-se ttm=0
-" }}}
-
-" Basic keys {{{
-nn U <C-R>
+" Disable some keys {{{
+sil! vu <C-x>
 
 nn <Space> <Nop>
-nn <C-Q> <Nop>
-
 for s:cmd in ['x', 'X', 's', 'S']
   if maparg(s:cmd, 'v') == ''
     exe 'vn ' . s:cmd . ' <Nop>'
   end
 endfor
+
+nn <C-q> <Nop>
+" }}}
+
+" Basic keys {{{
+nn U <C-r>
+
+nn <silent> q :q<CR>
+nn <silent> Q :qa<CR>
+nn gq q
 
 vn <RightMouse> "*y
 
@@ -48,17 +54,15 @@ vn ia i>
 ono aa a>
 vn aa a>
 
-nn <C-H> <C-W>h
-nn <C-J> <C-W>j
-nn <C-K> <C-W>k
-nn <C-L> <C-W>l
+nn <C-h> <C-w>h
+nn <C-j> <C-w>j
+nn <C-k> <C-w>k
+nn <C-l> <C-w>l
 " }}}
 
 " Space leading keys {{{
-no <Space>j <C-D>
-no <Space>k <C-U>
-nn <silent> <Space>q :q<CR>
-nn <silent> <Space>Q :qa<CR>
+no <Space>j <C-d>
+no <Space>k <C-u>
 nn <silent> <Space>w :up<CR>
 nn <silent> <Space>y :call ClipAll()<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
@@ -67,40 +71,11 @@ nn <silent> <Space>p :let &paste=!&paste<CR>
 " Search & Replace {{{
 nn <silent> & :&&<CR>
 nn gs :%s//g<Left><Left>
-nn g* :%s/\<<C-R><C-W>\>//g<Left><Left>
+nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
 vn <silent> s :call VSub()<CR>
 
 nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
 nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
-" }}}
-
-" Plugins {{{
-
-" EasyMotion {{{
-
-map gj <Plug>(easymotion-j)
-map gk <Plug>(easymotion-k)
-nm go <Plug>(easymotion-overwin-line)
-
-nn <silent> g<Space> :call MultibyteToggle()<CR>
-
-map gb <Plug>(easymotion-b)
-map gw <Plug>(easymotion-w)
-map gB <Plug>(easymotion-ge)
-map gW <Plug>(easymotion-e)
-
-let g:EasyMotion_re_line_anywhere = '.'
-map gh <Plug>(easymotion-bl)
-map gl <Plug>(easymotion-wl)
-map gH <Plug>(easymotion-linebackward)
-map gL <Plug>(easymotion-lineforward)
-
-" }}}
-
-nm gS <Plug>TComment_gcc
-
-nn <silent> <Space>t :NERDTreeToggle<CR>
-
 " }}}
 
 if s:win_gui
@@ -112,6 +87,8 @@ else
 end
 
 let g:mapleader=' '
+
+no <M-x> :
 
 "se kmp=dvorak
 
@@ -144,6 +121,25 @@ call plug#end()
 
 ru! macros/matchit.vim
 
+" EasyMotion {{{
+let g:EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
+
+map gj <Plug>(easymotion-j)
+map gk <Plug>(easymotion-k)
+nm go <Plug>(easymotion-overwin-line)
+
+map gb <Plug>(easymotion-b)
+map gw <Plug>(easymotion-w)
+map gB <Plug>(easymotion-ge)
+map gW <Plug>(easymotion-e)
+
+let g:EasyMotion_re_line_anywhere = '.'
+map gh <Plug>(easymotion-bl)
+map gl <Plug>(easymotion-wl)
+map gH <Plug>(easymotion-linebackward)
+map gL <Plug>(easymotion-lineforward)
+" }}}
+
 " NERDTree {{{
 aug config_NERDTree
   au!
@@ -154,9 +150,14 @@ aug END
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeIgnore = ['^ntuser.*\c']
+
+let g:NERDTreeMapHelp = 'K'
+let g:NERDTreeMapQuit = '<C-q>'
+
+nn <silent> <Space>t :NERDTreeToggle<CR>
 " }}}
 
-let g:EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
+nm gS <Plug>TComment_gcc
 
 " ---------------------------- }}}
 
@@ -240,10 +241,10 @@ let g:ruby_indent_assignment_style = 'variable'
 
 let g:tex_flavor = 'latex'
 
-function! FileTypeConfig()
+func! FileTypeConfig()
   setl fo-=ro
 
-  if index(['cpp', 'c', 'make', 'python'], &ft) != -1
+  if index(['cpp', 'c', 'make'], &ft) != -1
     setl ts=4
     setl sw=4
   end
@@ -273,7 +274,7 @@ function! FileTypeConfig()
     setl wrap
 
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
-    im <buffer> <silent> <F5> <C-O><F5>
+    im <buffer> <silent> <F5> <C-o><F5>
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', "Run('call Compile()')", 1)
   end
@@ -289,7 +290,7 @@ aug END
 " Functions ------------------ {{{
 
 " Utils ---------------------- {{{
-function! TryExec(cmd, ...)
+func! TryExec(cmd, ...)
   let s:exception = ''
   let pat = a:0 >= 1 ? a:1 : '.*'
   try
@@ -305,14 +306,14 @@ function! TryExec(cmd, ...)
   endt
 endf
 
-function! Input(prompt)
+func! Input(prompt)
   call inputsave()
   let value = input(a:prompt)
   call inputrestore()
   return value
 endf
 
-function! LSMap(type, key, func, expect_pause)
+func! LSMap(type, key, func, expect_pause)
   let cmd = printf('%s <buffer> <silent> %s :call %s<CR>', a:type, a:key, a:func)
   if a:expect_pause && s:win_gui
     exe cmd . '<CR>'
@@ -323,7 +324,7 @@ endf
 " }}}
 
 " WinOpen(name, silent = 1, admin = 0)
-function! WinOpen(name, ...)
+func! WinOpen(name, ...)
   " Call wscript.run with extern script files
   let method = a:0 < 2 || !a:2 ? 'open' : 'sudo'
   if s:win
@@ -337,17 +338,17 @@ function! WinOpen(name, ...)
   else
     sil exe prefix . a:name
     if !s:win_gui
-      redr!
+      redraw!
     end
   end
 endf
 
-function! SetAlpha(alpha)
+func! SetAlpha(alpha)
   call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
 endf
 
 " Compile & Run -------------- {{{
-function! Make(...)
+func! Make(...)
   for dir in ['.', '..']
     if filereadable(dir . '/Makefile')
       if !a:0
@@ -364,7 +365,7 @@ function! Make(...)
   endfor
 endf
 
-function! Compile(...)
+func! Compile(...)
   up
   if &ft == 'cpp' || &ft == 'c'
     if !Make()
@@ -398,7 +399,7 @@ function! Compile(...)
   end
 endf
 
-function! Run(...)
+func! Run(...)
   if a:0
     exe a:1
   end
@@ -423,7 +424,7 @@ function! Run(...)
   end
 endf
 
-function! Debug()
+func! Debug()
   if &ft == 'cpp' || &ft == 'c'
     if !Make('debug')
       call WinOpen('gdb "%<"')
@@ -433,7 +434,7 @@ endf
 " ---------------------------- }}}
 
 " Commands {{{
-function! CenterAfter(ncmd)
+func! CenterAfter(ncmd)
   call TryExec('norm! ' . a:ncmd, '486')
   if s:exception != ''
     return
@@ -444,7 +445,7 @@ function! CenterAfter(ncmd)
   norm! zz
 endf
 
-function! ShowSearch(ncmd)
+func! ShowSearch(ncmd)
   if s:exception != ''
     return
   end
@@ -459,21 +460,26 @@ function! ShowSearch(ncmd)
   end
 endf
 
-function! VSub() range
+func! VSub() range
   let pat = Input('Pattern: ')
+  if pat == ''
+    redraw
+    echo
+    return
+  end
   let sub = Input('Substitute: ')
-  redr
+  redraw
   call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
 endf
 
-function! ClipAll()
+func! ClipAll()
   %y *
   if @*[-1:] == "\n"
     let @* = @*[:-2]
   end
 endf
 
-function! InsertTeXEnv()
+func! InsertTeXEnv()
   exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
 endf
 " }}}
