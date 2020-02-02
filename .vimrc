@@ -1,3 +1,4 @@
+
 " General -------------------- {{{
 
 se nocp
@@ -7,6 +8,7 @@ se acd
 se noswf
 se ffs=unix,dos
 se enc=utf-8
+se fencs=ucs-bom,utf-8,cp932,cp936,latin1
 
 se rtp+=~/.vim
 se vi+=n~/.viminfo
@@ -98,24 +100,25 @@ no <M-x> :
 
 call plug#begin('~/.vim/plugged')
 
-Plug 'danro/rename.vim'
-
-Plug 'vim-ruby/vim-ruby'
-Plug 'pangloss/vim-javascript'
-Plug 'chemzqm/wxapp.vim'
-
-Plug 'flazz/vim-colorschemes'
+" Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
-Plug 'flosacca/vim-coloresque'
 Plug 'itchyny/lightline.vim'
 Plug 'scrooloose/nerdtree'
+Plug 'flosacca/vim-coloresque'
 
-Plug 'vim-scripts/tComment'
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-abolish'
 Plug 'easymotion/vim-easymotion'
+Plug 'tpope/vim-surround'
+Plug 'vim-scripts/tComment'
 Plug 'mattn/emmet-vim'
-Plug 'tpope/vim-rails'
+Plug 'danro/rename.vim'
+Plug 'tpope/vim-abolish'
+Plug 'godlygeek/tabular'
+
+" Plug 'plasticboy/vim-markdown'
+Plug 'vim-ruby/vim-ruby'
+Plug 'pangloss/vim-javascript'
+" Plug 'tpope/vim-rails'
+" Plug 'chemzqm/wxapp.vim'
 
 call plug#end()
 
@@ -141,12 +144,6 @@ map gL <Plug>(easymotion-lineforward)
 " }}}
 
 " NERDTree {{{
-aug config_NERDTree
-  au!
-  au StdinReadPre * let s:std_in = 1
-  au VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | end
-aug END
-
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeIgnore = ['^ntuser.*\c']
