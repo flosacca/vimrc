@@ -1,4 +1,3 @@
-
 " General -------------------- {{{
 
 se nocp
@@ -119,6 +118,8 @@ Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
 " Plug 'tpope/vim-rails'
 " Plug 'chemzqm/wxapp.vim'
+
+Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() } }
 
 call plug#end()
 
@@ -241,17 +242,16 @@ let g:tex_flavor = 'latex'
 func! FileTypeConfig()
   setl fo-=ro
 
-  if index(['cpp', 'c', 'make'], &ft) != -1
+  if &ft =~ '\v^(c|cpp|make)$'
     setl ts=4
     setl sw=4
   end
 
-  if index(['cpp', 'c', 'make'], &ft) != -1
+  if &ft =~ '\v^(c|cpp|make)$'
     setl noet
   end
 
-  if index(['cpp', 'c'], &ft) != -1
-
+  if &ft =~ '\v^(c|cpp)$'
     setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
 
     let f = [['<F5>', 'Debug()']]
@@ -364,7 +364,7 @@ endf
 
 func! Compile(...)
   up
-  if &ft == 'cpp' || &ft == 'c'
+  if &ft =~ '\v^(c|cpp)$'
     if !Make()
       let basic_flags = ['-posix']
       if s:win
@@ -400,18 +400,20 @@ func! Run(...)
   if a:0
     exe a:1
   end
-  if &ft == 'cpp' || &ft == 'c'
+  if &ft == 'autohotkey'
+    call WinOpen('"%"', 0, 1)
+  elseif &ft =~ '\v^(c|cpp)$'
     if !Make('run')
       exe '!"./%<"'
     end
+  elseif &ft == 'markdown'
+    MarkdownPreview
   elseif &ft == 'python'
     exe '!python "%"'
   elseif &ft == 'ruby'
     exe '!ruby "%"'
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
-  elseif &ft == 'autohotkey'
-    call WinOpen('"%"', 0, 1)
   else
     if s:win
       call WinOpen('"%"')
@@ -422,7 +424,7 @@ func! Run(...)
 endf
 
 func! Debug()
-  if &ft == 'cpp' || &ft == 'c'
+  if &ft =~ '\v^(c|cpp)$'
     if !Make('debug')
       call WinOpen('gdb "%<"')
     end
@@ -482,3 +484,21 @@ endf
 " }}}
 
 " ---------------------------- }}}
+
+" Experimental {{{
+
+aug experimental_functions
+  au!
+  au BufRead * call PureTextConfig()
+aug END
+
+func! PureTextConfig()
+  if &ft =~ '\v^(markdown|text)$'
+    setl nocuc
+    setl nocul
+    setl slm=mouse
+    star
+  end
+endf
+
+" }}}
