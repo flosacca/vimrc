@@ -257,7 +257,7 @@ func! FileTypeConfig()
     let f = [['<F5>', 'Debug()']]
     call add(f, ['<F6>', 'Compile(["-O2"])'])
     call add(f, ['<F7>', 'Compile(["-g3"])'])
-    call add(f, ['<F9>', "Run('call Compile([\"-g3\"])')"])
+    call add(f, ['<F9>', ['call Compile(["-g3"])', 'call Run()']])
 
     for i in range(4)
       call LSMap('nn', f[i][0], f[i][1], f[i][0] != '<F5>')
@@ -273,7 +273,7 @@ func! FileTypeConfig()
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     im <buffer> <silent> <F5> <C-o><F5>
     call LSMap('nn', '<F7>', 'Compile()', 1)
-    call LSMap('nn', '<F9>', "Run('call Compile()')", 1)
+    call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
   end
 endf
 
@@ -289,7 +289,7 @@ aug END
 " Utils ---------------------- {{{
 func! TryExec(cmd, ...)
   let s:exception = ''
-  let pat = a:0 >= 1 ? a:1 : '.*'
+  let pat = get(a:, 1, '.*')
   try
     exe a:cmd
   catch
@@ -310,8 +310,14 @@ func! Input(prompt)
   return value
 endf
 
-func! LSMap(type, key, func, expect_pause)
-  let cmd = printf('%s <buffer> <silent> %s :call %s<CR>', a:type, a:key, a:func)
+func! LSMap(type, key, cmd, expect_pause, ...)
+  let cmd = a:cmd
+  if type(cmd) == 3
+    let cmd = join(cmd, '<Bar>')
+  elseif get(a:, 1, 1)
+    let cmd = 'call ' . cmd
+  end
+  let cmd = printf('%s <buffer> <silent> %s :%s<CR>', a:type, a:key, cmd)
   if a:expect_pause && s:win_gui
     exe cmd . '<CR>'
   else
@@ -320,17 +326,18 @@ func! LSMap(type, key, func, expect_pause)
 endf
 " }}}
 
-" WinOpen(name, silent = 1, admin = 0)
+" For Windows only
+" Call wscript.run by open.vbs or sudo.vbs
+" The VBS files must be avaliable in PATH
 func! WinOpen(name, ...)
-  " Call wscript.run with extern script files
-  let method = a:0 < 2 || !a:2 ? 'open' : 'sudo'
+  let method = !get(a:, 2, 0) ? 'open' : 'sudo'
   if s:win
     let prefix = printf('!%s ', method)
   else
-    " For msys2 compability
-    let prefix = printf('!ws.sh %s ', method)
+    " In MSYS2, use extra script to find and execute VBS files
+    let prefix = printf('!ws %s ', method)
   end
-  if a:0 >= 1 && !a:1
+  if !get(a:, 1, 1)
     exe prefix . a:name
   else
     sil exe prefix . a:name
@@ -346,7 +353,7 @@ endf
 
 " Compile & Run -------------- {{{
 func! Make(...)
-  for dir in ['.', '..']
+  for dir in ['.', '..', '../..']
     if filereadable(dir . '/Makefile')
       if !a:0
         exe '!cd ' . dir . ' && make'
@@ -390,16 +397,12 @@ func! Compile(...)
         exe join(['!gcc'] + flags + ['-o "%<" "%"'] + basic_flags)
       end
     end
-  end
-  if &ft == 'tex'
+  elseif &ft == 'tex'
     exe '!xelatex "%"'
   end
 endf
 
-func! Run(...)
-  if a:0
-    exe a:1
-  end
+func! Run()
   if &ft == 'autohotkey'
     call WinOpen('"%"', 0, 1)
   elseif &ft =~ '\v^(c|cpp)$'
