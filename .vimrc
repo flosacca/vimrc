@@ -157,6 +157,8 @@ nn <silent> <Space>t :NERDTreeToggle<CR>
 
 nm gS <Plug>TComment_gcc
 
+let g:mkdp_auto_close = 0
+
 " ---------------------------- }}}
 
 " View ----------------------- {{{
@@ -264,6 +266,11 @@ func! FileTypeConfig()
     endfor
   end
 
+  if &ft == 'markdown'
+    call LSMap('nn', '<F8>', 'Run()', 0)
+    im <buffer> <silent> <F8> <C-o><F8>
+  end
+
   if &ft == 'tex'
     setl inde=
     setl nocul
@@ -310,14 +317,14 @@ func! Input(prompt)
   return value
 endf
 
-func! LSMap(type, key, cmd, expect_pause, ...)
+func! LSMap(map, key, cmd, expect_pause, ...)
   let cmd = a:cmd
   if type(cmd) == 3
     let cmd = join(cmd, '<Bar>')
   elseif get(a:, 1, 1)
     let cmd = 'call ' . cmd
   end
-  let cmd = printf('%s <buffer> <silent> %s :%s<CR>', a:type, a:key, cmd)
+  let cmd = printf('%s <buffer> <silent> %s :%s<CR>', a:map, a:key, cmd)
   if a:expect_pause && s:win_gui
     exe cmd . '<CR>'
   else
