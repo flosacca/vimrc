@@ -9,7 +9,7 @@ se ffs=unix,dos
 se enc=utf-8
 se fencs=ucs-bom,utf-8,cp932,cp936,latin1
 
-se rtp+=~/.vim
+se rtp+=~/.vim,~/.vim/after
 se vi+=n~/.viminfo
 
 let s:win = has('win32') || has('win64')
@@ -99,7 +99,7 @@ no <M-x> :
 
 call plug#begin('~/.vim/plugged')
 
-" Plug 'flazz/vim-colorschemes'
+Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
 Plug 'itchyny/lightline.vim'
 Plug 'scrooloose/nerdtree'
@@ -111,15 +111,12 @@ Plug 'vim-scripts/tComment'
 Plug 'mattn/emmet-vim'
 Plug 'danro/rename.vim'
 Plug 'tpope/vim-abolish'
-Plug 'godlygeek/tabular'
 
-" Plug 'plasticboy/vim-markdown'
 Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
-" Plug 'tpope/vim-rails'
-" Plug 'chemzqm/wxapp.vim'
+Plug 'tpope/vim-rails'
 
-Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() } }
+Plug 'iamcco/markdown-preview.nvim'
 
 call plug#end()
 
@@ -188,7 +185,7 @@ if s:gui
     au GUIEnter * sim ~x
   aug END
 
-elseif s:win
+elseif $TERM !~ '256'
   let g:use_gui_colors = 0
   se nocuc
   se nocul
@@ -225,6 +222,7 @@ end
 se ts=2
 se sw=2
 se et
+se si
 
 " ---------------------------- }}}
 
@@ -349,7 +347,7 @@ endf
 " The VBS files must be avaliable in PATH
 func! WinOpen(name, ...)
   let method = !get(a:, 2, 0) ? 'open' : 'sudo'
-  if s:win
+  if !exists('$MSYSTEM')
     let prefix = printf('!%s ', method)
   else
     " In MSYS2, use extra script to find and execute VBS files
@@ -391,7 +389,7 @@ func! Compile(...)
   up
   if &ft =~ '\v^(c|cpp)$'
     if !Make()
-      let basic_flags = ['-posix']
+      let basic_flags = []
       if s:win
         let basic_flags += ['-Wl,--stack=268435456']
       end
@@ -436,10 +434,10 @@ func! Run()
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
   else
-    if s:win
-      call WinOpen('"%"')
-    else
+    if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
       exe '!"./%"'
+    else
+      call WinOpen('"%"')
     end
   end
 endf
