@@ -284,9 +284,20 @@ func! FileTypeConfig()
   end
 endf
 
+func! PureTextConfig()
+  if &ft =~ '\v^(markdown|text)$'
+    setl nocuc
+    setl nocul
+    setl wrap
+    setl slm=mouse
+    star
+  end
+endf
+
 aug file_type_config
   au!
   au BufEnter * call FileTypeConfig()
+  au BufRead,BufNewFile * call PureTextConfig()
 aug END
 
 " ---------------------------- }}}
@@ -494,21 +505,3 @@ endf
 " }}}
 
 " ---------------------------- }}}
-
-" Experimental {{{
-
-aug experimental_functions
-  au!
-  au BufRead * call PureTextConfig()
-aug END
-
-func! PureTextConfig()
-  if &ft =~ '\v^(markdown|text)$'
-    setl nocuc
-    setl nocul
-    setl slm=mouse
-    star
-  end
-endf
-
-" }}}
