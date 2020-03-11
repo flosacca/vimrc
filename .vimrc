@@ -342,21 +342,17 @@ func! LSMap(map, key, cmd, expect_pause, ...)
 endf
 " }}}
 
-" For Windows only
-" Call wscript.run by open.vbs or sudo.vbs
-" The VBS files must be avaliable in PATH
+" Call run.exe written in AHK
 func! WinOpen(name, ...)
-  let method = !get(a:, 2, 0) ? 'open' : 'sudo'
-  if !exists('$MSYSTEM')
-    let prefix = printf('!%s ', method)
-  else
-    " In MSYS2, use extra script to find and execute VBS files
-    let prefix = printf('!ws %s ', method)
+  let cmd = '!run '
+  if get(a:, 2, 0)
+    let cmd .= '*RunAs '
   end
+  let cmd .= a:name
   if !get(a:, 1, 1)
-    exe prefix . a:name
+    exe cmd
   else
-    sil exe prefix . a:name
+    sil exe cmd
     if !s:win_gui
       redraw!
     end
