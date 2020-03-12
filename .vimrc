@@ -12,13 +12,19 @@ se fencs=ucs-bom,utf-8,cp932,cp936,latin1
 se rtp+=~/.vim,~/.vim/after
 se vi+=n~/.viminfo
 
+se noto
+se ttimeout
+se ttm=0
+
 let s:win = has('win32') || has('win64')
 let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
 
-se noto
-se ttimeout
-se ttm=0
+aug detect_stdin
+  au!
+  au StdinReadPost * let b:stdin = 1
+  au BufWrite * unl! b:stdin
+aug END
 
 " ---------------------------- }}}
 
@@ -40,7 +46,7 @@ nn <C-q> <Nop>
 " Basic keys {{{
 nn U <C-r>
 
-nn <silent> q :q<CR>
+nn <silent> q :call Quit()<CR>
 nn <silent> Q :qa<CR>
 nn gq q
 
@@ -114,6 +120,7 @@ Plug 'tpope/vim-abolish'
 
 Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
+Plug 'kchmck/vim-coffee-script'
 Plug 'tpope/vim-rails'
 
 Plug 'iamcco/markdown-preview.nvim'
@@ -171,7 +178,7 @@ se nosmd
 
 aug move_help_window
   au!
-  au BufEnter * if &bt == 'help' | winc L | end
+  au BufRead * if &bt == 'help' | winc L | end
 aug END
 
 let g:use_gui_colors = 1
@@ -342,6 +349,8 @@ func! LSMap(map, key, cmd, expect_pause, ...)
 endf
 " }}}
 
+" Windows Only {{{
+
 " Call run.exe written in AHK
 func! WinOpen(name, ...)
   let cmd = '!run '
@@ -362,6 +371,7 @@ endf
 func! SetAlpha(alpha)
   call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
 endf
+" }}}
 
 " Compile & Run -------------- {{{
 func! Make(...)
@@ -448,6 +458,33 @@ endf
 " ---------------------------- }}}
 
 " Commands {{{
+func! Quit()
+  if !exists('b:stdin')
+    q
+  else
+    q!
+  end
+endf
+
+func! ClipAll()
+  %y *
+  if @*[-1:] == "\n"
+    let @* = @*[:-2]
+  end
+endf
+
+func! VSub() range
+  let pat = Input('Pattern: ')
+  if pat == ''
+    redraw
+    echo
+    return
+  end
+  let sub = Input('Substitute: ')
+  redraw
+  call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
+endf
+
 func! CenterAfter(ncmd)
   call TryExec('norm! ' . a:ncmd, '486')
   if s:exception != ''
@@ -471,25 +508,6 @@ func! ShowSearch(ncmd)
     if line(".") != line("''") ? line(".") < line("''") : col(".") < col("''")
       echo '?' . @/
     end
-  end
-endf
-
-func! VSub() range
-  let pat = Input('Pattern: ')
-  if pat == ''
-    redraw
-    echo
-    return
-  end
-  let sub = Input('Substitute: ')
-  redraw
-  call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
-endf
-
-func! ClipAll()
-  %y *
-  if @*[-1:] == "\n"
-    let @* = @*[:-2]
   end
 endf
 
