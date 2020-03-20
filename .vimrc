@@ -12,7 +12,10 @@ se fencs=ucs-bom,utf-8,cp932,cp936,latin1
 se rtp+=~/.vim,~/.vim/after
 se vi+=n~/.viminfo
 
+" Wait forever for mappings
 se noto
+
+" Wait no time for key codes
 se ttimeout
 se ttm=0
 
@@ -71,6 +74,7 @@ nn <C-l> <C-w>l
 no <Space>j <C-d>
 no <Space>k <C-u>
 nn <silent> <Space>w :up<CR>
+nn <silent> <Space>r :redr!<CR>
 nn <silent> <Space>y :call ClipAll()<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
 " }}}
@@ -117,6 +121,7 @@ Plug 'vim-scripts/tComment'
 Plug 'mattn/emmet-vim'
 Plug 'danro/rename.vim'
 Plug 'tpope/vim-abolish'
+Plug 'terryma/vim-multiple-cursors'
 
 Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
@@ -151,7 +156,6 @@ map gL <Plug>(easymotion-lineforward)
 " NERDTree {{{
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
-let g:NERDTreeIgnore = ['^ntuser.*\c']
 
 let g:NERDTreeMapHelp = 'K'
 let g:NERDTreeMapQuit = '<C-q>'
@@ -159,9 +163,19 @@ let g:NERDTreeMapQuit = '<C-q>'
 nn <silent> <Space>t :NERDTreeToggle<CR>
 " }}}
 
+" Emmet {{{
+let g:user_emmet_leader_key='<C-t>'
+
+im <C-u> <Plug>(emmet-expand-abbr)
+nm <C-u> <Plug>(emmet-expand-abbr)
+vm <C-u> <Plug>(emmet-expand-abbr)
+" }}}
+
+" Others {{{
 nm gS <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
+" }}}
 
 " ---------------------------- }}}
 
@@ -180,6 +194,20 @@ aug move_help_window
   au!
   au BufRead * if &bt == 'help' | winc L | end
 aug END
+
+if exists('$NOBLINK')
+  let &t_ti .= "\e[2 q"
+  let &t_SI .= "\e[6 q"
+  let &t_SR .= "\e[4 q"
+  let &t_EI .= "\e[2 q"
+  let &t_te .= "\e[4 q"
+else
+  let &t_ti .= "\e[1 q"
+  let &t_SI .= "\e[5 q"
+  let &t_SR .= "\e[3 q"
+  let &t_EI .= "\e[1 q"
+  let &t_te .= "\e[3 q"
+end
 
 let g:use_gui_colors = 1
 
@@ -200,8 +228,8 @@ elseif $TERM !~ '256'
 
 else
   if has('termguicolors')
-    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+    let &t_8f = "\e[38;2;%lu;%lu;%lum"
+    let &t_8b = "\e[48;2;%lu;%lu;%lum"
     se tgc
   else
     let g:use_gui_colors = 0
@@ -242,19 +270,22 @@ aug END
 
 let g:c_no_curly_error = 1
 
+let g:sh_no_error = 1
+
 let g:ruby_indent_assignment_style = 'variable'
 
 let g:tex_flavor = 'latex'
 
 func! FileTypeConfig()
   setl fo-=ro
+  setl isk-=.
 
   if &ft =~ '\v^(c|cpp|make)$'
     setl ts=4
     setl sw=4
   end
 
-  if &ft =~ '\v^(c|cpp|make)$'
+  if &ft =~ '\v^(make)$'
     setl noet
   end
 
@@ -273,7 +304,7 @@ func! FileTypeConfig()
 
   if &ft == 'markdown'
     call LSMap('nn', '<F8>', 'Run()', 0)
-    im <buffer> <silent> <F8> <C-o><F8>
+    call LSMap('ino', '<F8>', 'Run()', 0)
   end
 
   if &ft == 'tex'
@@ -282,15 +313,18 @@ func! FileTypeConfig()
     setl nocuc
     setl wrap
 
+    ino <buffer> ` \
+    ino <buffer> \ `
+
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
-    im <buffer> <silent> <F5> <C-o><F5>
+    call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
   end
 endf
 
 func! PureTextConfig()
-  if &ft =~ '\v^(markdown|text)$'
+  if &ft =~ '\v^(markdown|text)$' && &bt != 'help'
     setl nocuc
     setl nocul
     setl wrap
@@ -340,7 +374,11 @@ func! LSMap(map, key, cmd, expect_pause, ...)
   elseif get(a:, 1, 1)
     let cmd = 'call ' . cmd
   end
-  let cmd = printf('%s <buffer> <silent> %s :%s<CR>', a:map, a:key, cmd)
+  let cmd = ':' . cmd . '<CR>'
+  if a:map[0] == 'i'
+    let cmd = '<C-o>' . cmd
+  end
+  let cmd = printf('%s <buffer> <silent> %s %s', a:map, a:key, cmd)
   if a:expect_pause && s:win_gui
     exe cmd . '<CR>'
   else
@@ -368,9 +406,7 @@ func! WinOpen(name, ...)
   end
 endf
 
-func! SetAlpha(alpha)
-  call libcall('vimtweak.dll', 'SetAlpha', a:alpha)
-endf
+com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 " }}}
 
 " Compile & Run -------------- {{{
