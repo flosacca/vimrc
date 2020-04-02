@@ -118,15 +118,17 @@ Plug 'flosacca/vim-coloresque'
 Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
-Plug 'mattn/emmet-vim'
+Plug 'terryma/vim-multiple-cursors'
 Plug 'danro/rename.vim'
 Plug 'tpope/vim-abolish'
-Plug 'terryma/vim-multiple-cursors'
+
+Plug 'mattn/emmet-vim'
 
 Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
 Plug 'kchmck/vim-coffee-script'
 Plug 'tpope/vim-rails'
+Plug 'gabrielelana/vim-markdown'
 
 Plug 'iamcco/markdown-preview.nvim'
 
@@ -175,6 +177,8 @@ vm <C-u> <Plug>(emmet-expand-abbr)
 nm gS <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
+
+let g:markdown_enable_spell_checking = 0
 " }}}
 
 " ---------------------------- }}}
@@ -244,6 +248,7 @@ if g:use_gui_colors
   let g:gruvbox_italic = 0
   colo gruvbox
   se bg=dark
+  hi! link Operator GruvboxRed
 
 else
   se t_Co=256
@@ -313,8 +318,8 @@ func! FileTypeConfig()
     setl nocuc
     setl wrap
 
-    ino <buffer> ` \
-    ino <buffer> \ `
+    no! <buffer> ` \
+    no! <buffer> \ `
 
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
@@ -324,7 +329,7 @@ func! FileTypeConfig()
 endf
 
 func! PureTextConfig()
-  if &ft =~ '\v^(markdown|text)$' && &bt != 'help'
+  if &ft =~ '\v^(text)$' && &bt != 'help'
     setl nocuc
     setl nocul
     setl wrap
