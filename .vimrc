@@ -74,7 +74,7 @@ nn <C-l> <C-w>l
 no <Space>j <C-d>
 no <Space>k <C-u>
 nn <silent> <Space>w :up<CR>
-nn <silent> <Space>r :redr!<CR>
+nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>y :call ClipAll()<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
 " }}}
@@ -333,8 +333,10 @@ func! PureTextConfig()
     setl nocuc
     setl nocul
     setl wrap
-    setl slm=mouse
-    star
+    if s:win_gui
+      setl slm=mouse
+      star
+    end
   end
 endf
 
@@ -475,7 +477,7 @@ func! Run()
   elseif &ft == 'markdown'
     MarkdownPreview
   elseif &ft == 'python'
-    exe '!python "%"'
+    exe '!python3 "%"'
   elseif &ft == 'ruby'
     exe '!ruby "%"'
   elseif &ft == 'tex'
@@ -508,10 +510,18 @@ func! Quit()
 endf
 
 func! ClipAll()
-  %y *
-  if @*[-1:] == "\n"
+  try
+    %y *
     let @* = @*[:-2]
-  end
+  catch
+    let fixeol = &fixeol
+    let eol = &eol
+    se nofixeol
+    se noeol
+    sil w !clip.exe
+    let &fixeol = fixeol
+    let &eol = eol
+  endt
 endf
 
 func! VSub() range
@@ -553,7 +563,7 @@ func! ShowSearch(ncmd)
 endf
 
 func! InsertTeXEnv()
-  exe "norm! ^\"yy$C\\begin{}\<CR>\\end{}\<Esc>\"yPk$\"yP$"
+  exe "norm! B\"cy$C\\begin{}\n\\end{}\e\"cPk$\"cP$"
 endf
 " }}}
 
