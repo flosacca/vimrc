@@ -382,7 +382,7 @@ func! LSMap(map, key, cmd, expect_pause, ...)
     let cmd = 'call ' . cmd
   end
   let cmd = ':' . cmd . '<CR>'
-  if a:map[0] == 'i'
+  if a:map[0] ==# 'i'
     let cmd = '<C-o>' . cmd
   end
   let cmd = printf('%s <buffer> <silent> %s %s', a:map, a:key, cmd)
@@ -418,20 +418,17 @@ com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 
 " Compile & Run -------------- {{{
 func! Make(...)
-  for dir in ['.', '..', '../..']
+  let dir = '.'
+  while 1
     if filereadable(dir . '/Makefile')
-      if !a:0
-        exe '!cd ' . dir . ' && make'
-      else
-        if a:1 != 'debug'
-          exe '!cd ' . dir . ' && make ' . a:1
-        else
-          sil exe '!cd ' . dir . ' && make debug'
-        end
-      end
+      exe printf('!cd %s && make %s', dir, a:0 ? a:1 : '')
       return 1
     end
-  endfor
+    if fnamemodify(dir, ':p') == fnamemodify(dir . '/..', ':p')
+      return 0
+    end
+    let dir .= '/..'
+  endw
 endf
 
 func! Compile(...)
@@ -463,7 +460,7 @@ func! Compile(...)
       end
     end
   elseif &ft == 'tex'
-    exe '!xelatex "%"'
+    !xelatex "%"
   end
 endf
 
@@ -472,19 +469,19 @@ func! Run()
     call WinOpen('"%"', 0, 1)
   elseif &ft =~ '\v^(c|cpp)$'
     if !Make('run')
-      exe '!"./%<"'
+      !"./%<"
     end
   elseif &ft == 'markdown'
     MarkdownPreview
   elseif &ft == 'python'
-    exe '!python3 "%"'
+    !python3 "%"
   elseif &ft == 'ruby'
-    exe '!ruby "%"'
+    !ruby "%"
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
   else
     if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
-      exe '!"./%"'
+      !"./%"
     else
       call WinOpen('"%"')
     end
