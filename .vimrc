@@ -276,6 +276,7 @@ aug END
 let g:c_no_curly_error = 1
 
 let g:sh_no_error = 1
+let g:is_bash = 1
 
 let g:ruby_indent_assignment_style = 'variable'
 
@@ -283,7 +284,6 @@ let g:tex_flavor = 'latex'
 
 func! FileTypeConfig()
   setl fo-=ro
-  setl isk-=.
 
   if &ft =~ '\v^(c|cpp|make)$'
     setl ts=4
@@ -318,8 +318,8 @@ func! FileTypeConfig()
     setl nocuc
     setl wrap
 
-    no! <buffer> ` \
-    no! <buffer> \ `
+    no! <buffer> <Tab> \
+    no! <buffer> \ <Tab>
 
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
