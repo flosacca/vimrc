@@ -3,7 +3,6 @@
 se nocp
 se bs=2
 se wak=no
-se acd
 se noswf
 se ffs=unix,dos
 se enc=utf-8
@@ -36,22 +35,20 @@ aug END
 " Disable some keys {{{
 sil! vu <C-x>
 
-nn <Space> <Nop>
-for s:cmd in ['x', 'X', 's', 'S']
-  if maparg(s:cmd, 'v') == ''
-    exe 'vn ' . s:cmd . ' <Nop>'
-  end
-endfor
-
 nn <C-q> <Nop>
 " }}}
 
 " Basic keys {{{
 nn U <C-r>
 
-nn <silent> q :call Quit()<CR>
-nn <silent> Q :qa<CR>
-nn gq q
+no <silent> q :call Quit()<CR>
+no <silent> Q :qa<CR>
+no gq q
+
+nn <C-h> <C-w>h
+nn <C-j> <C-w>j
+nn <C-k> <C-w>k
+nn <C-l> <C-w>l
 
 vn <RightMouse> "*y
 
@@ -64,10 +61,10 @@ vn ia i>
 ono aa a>
 vn aa a>
 
-nn <C-h> <C-w>h
-nn <C-j> <C-w>j
-nn <C-k> <C-w>k
-nn <C-l> <C-w>l
+nn ga <C-a>
+vn ga g<C-a>
+nn gx <C-x>
+vn gx g<C-x>
 " }}}
 
 " Space leading keys {{{
@@ -81,9 +78,13 @@ nn <silent> <Space>p :let &paste=!&paste<CR>
 
 " Search & Replace {{{
 nn <silent> & :&&<CR>
+
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
-vn <silent> s :call VSub()<CR>
+
+vn <silent> s :call VSub('g')<CR>
+
+nn <silent> crB :call SplitBraces()<CR>
 
 nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
 nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
@@ -163,6 +164,28 @@ let g:NERDTreeMapHelp = 'K'
 let g:NERDTreeMapQuit = '<C-q>'
 
 nn <silent> <Space>t :NERDTreeToggle<CR>
+
+" This doesn't work when editing a new dir
+let g:NERDTreeChDirMode = 2
+
+func! AutoChdir()
+  if exists('b:NERDTree')
+    let path = b:NERDTree.root.path
+    if s:win
+      let full_path = join([path.drive] + path.pathSegments, '\')
+    else
+      let full_path = join([''] + path.pathSegments, '/')
+    end
+    exe 'cd ' . full_path
+  else
+    exe 'cd ' . expand('%:h')
+  end
+endf
+
+aug auto_chdir
+  au!
+  au BufEnter,FileType * call AutoChdir()
+aug END
 " }}}
 
 " Emmet {{{
@@ -179,6 +202,8 @@ nm gS <Plug>TComment_gcc
 let g:mkdp_auto_close = 0
 
 let g:markdown_enable_spell_checking = 0
+
+let g:multi_cursor_select_all_word_key = 'g<C-n>'
 " }}}
 
 " ---------------------------- }}}
@@ -318,8 +343,8 @@ func! FileTypeConfig()
     setl nocuc
     setl wrap
 
-    no! <buffer> <Tab> \
-    no! <buffer> \ <Tab>
+    ino <buffer> <Tab> \
+    ino <buffer> \ <Tab>
 
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
@@ -506,6 +531,10 @@ func! Quit()
   end
 endf
 
+func! SplitBraces()
+  exe "norm! viB\el%ls\n\e``%hs\n"
+endf
+
 func! ClipAll()
   try
     %y *
@@ -521,7 +550,7 @@ func! ClipAll()
   endt
 endf
 
-func! VSub() range
+func! VSub(...) range
   let pat = Input('Pattern: ')
   if pat == ''
     redraw
@@ -530,7 +559,8 @@ func! VSub() range
   end
   let sub = Input('Substitute: ')
   redraw
-  call TryExec('''<,''>s/\m\%V\%(' . pat . '\m\)/' . sub . '/g', '486')
+  let pat = '\m\%V\%(' . pat . '\m\)'
+  call TryExec(printf("'<,'>s/%s/%s/%s", pat, sub, get(a:, 1, '')), '486')
 endf
 
 func! CenterAfter(ncmd)
