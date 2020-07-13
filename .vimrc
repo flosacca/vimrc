@@ -102,6 +102,9 @@ let g:mapleader=' '
 
 no <M-x> :
 
+ino <C-\><CR> <CR><Up><End><CR>
+ino <C-\><BS> <Up><End><CR>
+
 "se kmp=dvorak
 
 " ---------------------------- }}}
@@ -300,12 +303,13 @@ aug END
 
 let g:c_no_curly_error = 1
 
-let g:sh_no_error = 1
 let g:is_bash = 1
-
-let g:ruby_indent_assignment_style = 'variable'
+let g:sh_no_error = 1
 
 let g:tex_flavor = 'latex'
+let g:tex_no_error = 1
+
+let g:ruby_indent_assignment_style = 'variable'
 
 func! FileTypeConfig()
   setl fo-=ro
@@ -350,6 +354,11 @@ func! FileTypeConfig()
     call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
+  end
+
+  if &ft =~ '^eruby'
+    ino <buffer> <C-\>j <%  %><Left><Left><Left>
+    ino <buffer> <C-\>k <%=  %><Left><Left><Left>
   end
 endf
 
@@ -456,33 +465,26 @@ func! Make(...)
   endw
 endf
 
+let g:cxxflags = ['-std=c++14']
+let g:cflags = ['-std=c99']
+
 func! Compile(...)
   up
   if &ft =~ '\v^(c|cpp)$'
     if !Make()
-      let basic_flags = []
+      let ld_flags = []
       if s:win
-        let basic_flags += ['-Wl,--stack=268435456']
+        let ld_flags += ['-Wl,--stack=268435456']
       end
+
       if &ft == 'cpp'
-        let flags = ['-std=c++14']
+        let cmd = ["g++", g:cxxflags]
       else
-        let flags = ['-std=c99']
+        let cmd = ['gcc', g:cflags]
       end
-      if a:0
-        for flag in a:1
-          if flag =~# '-std'
-            let flags = []
-            break
-          end
-        endfor
-        let flags += a:1
-      end
-      if &ft == 'cpp'
-        exe join(['!g++'] + flags + ['-o "%<" "%"'] + basic_flags)
-      else
-        exe join(['!gcc'] + flags + ['-o "%<" "%"'] + basic_flags)
-      end
+      let flags = cmd[1] + get(a:, 1, [])
+
+      exe '!' . join([cmd[0]] + flags + ['-o "%<" "%"'] + ld_flags)
     end
   elseif &ft == 'tex'
     !xelatex "%"
