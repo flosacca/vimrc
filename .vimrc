@@ -45,10 +45,10 @@ no <silent> q :call Quit()<CR>
 no <silent> Q :qa<CR>
 no gq q
 
-nn <C-h> <C-w>h
-nn <C-j> <C-w>j
-nn <C-k> <C-w>k
-nn <C-l> <C-w>l
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
 
 vn <RightMouse> "*y
 
@@ -102,8 +102,9 @@ let g:mapleader=' '
 
 no <M-x> :
 
-ino <C-\><CR> <CR><Up><End><CR>
+ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
+ino <C-\>e <CR><Up><End><CR>
 
 "se kmp=dvorak
 
@@ -207,6 +208,10 @@ let g:mkdp_auto_close = 0
 let g:markdown_enable_spell_checking = 0
 
 let g:multi_cursor_select_all_word_key = 'g<C-n>'
+
+hi link coffeeSpaceError NONE
+
+let g:coffee_indent_keep_current = 1
 " }}}
 
 " ---------------------------- }}}
@@ -245,7 +250,7 @@ let g:use_gui_colors = 1
 
 if s:gui
   se go=
-  se gfn=ubuntu_mono:h16
+  se gfn=ubuntu_mono:h14
 
   aug maximize_gui
     au!
@@ -357,8 +362,17 @@ func! FileTypeConfig()
   end
 
   if &ft =~ '^eruby'
-    ino <buffer> <C-\>j <%  %><Left><Left><Left>
-    ino <buffer> <C-\>k <%=  %><Left><Left><Left>
+    ino <buffer> <C-\>d <%  %><Left><Left><Left>
+    ino <buffer> <C-\>f <%=  %><Left><Left><Left>
+  end
+
+  if &ft =~ '^s[ca]ss$'
+    call LSMap('nn', '<F7>', 'Compile()', 1)
+  end
+
+  if &ft == 'coffee'
+    call LSMap('nn', '<F7>', 'Compile()', 1)
+    call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
   end
 endf
 
@@ -488,6 +502,11 @@ func! Compile(...)
     end
   elseif &ft == 'tex'
     !xelatex "%"
+  elseif &ft =~ '^s[ca]ss$'
+    !scss --style=expanded "%" "%<.css"
+  elseif &ft == 'coffee'
+    sil make
+    redraw!
   end
 endf
 
