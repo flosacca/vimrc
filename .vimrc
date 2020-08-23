@@ -131,8 +131,10 @@ Plug 'mattn/emmet-vim'
 
 Plug 'vim-ruby/vim-ruby'
 Plug 'pangloss/vim-javascript'
-Plug 'kchmck/vim-coffee-script'
 Plug 'tpope/vim-rails'
+Plug 'vim-language-dept/css-syntax.vim'
+" Plug 'posva/vim-vue'
+Plug 'leafOfTree/vim-vue-plugin'
 Plug 'gabrielelana/vim-markdown'
 
 Plug 'iamcco/markdown-preview.nvim'
@@ -208,10 +210,6 @@ let g:mkdp_auto_close = 0
 let g:markdown_enable_spell_checking = 0
 
 let g:multi_cursor_select_all_word_key = 'g<C-n>'
-
-hi link coffeeSpaceError NONE
-
-let g:coffee_indent_keep_current = 1
 " }}}
 
 " ---------------------------- }}}
@@ -316,6 +314,13 @@ let g:tex_no_error = 1
 
 let g:ruby_indent_assignment_style = 'variable'
 
+" let g:vim_vue_plugin_load_full_syntax = 1
+let g:vim_vue_plugin_use_scss = 1
+let g:vim_vue_plugin_highlight_vue_attr = 1
+let g:vim_vue_plugin_highlight_vue_keyword = 1
+
+hi link jsParensError NONE
+
 func! FileTypeConfig()
   setl fo-=ro
 
@@ -370,9 +375,8 @@ func! FileTypeConfig()
     call LSMap('nn', '<F7>', 'Compile()', 1)
   end
 
-  if &ft == 'coffee'
-    call LSMap('nn', '<F7>', 'Compile()', 1)
-    call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
+  if &ft == 'vue'
+    setl isk+=-
   end
 endf
 
@@ -523,6 +527,8 @@ func! Run()
     !python3 "%"
   elseif &ft == 'ruby'
     !ruby "%"
+  elseif &ft == 'javascript'
+    !node "%"
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
   else
