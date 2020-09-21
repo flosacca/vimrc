@@ -8,7 +8,8 @@ se ffs=unix,dos
 se enc=utf-8
 se fencs=ucs-bom,utf-8,cp932,cp936,latin1
 
-se rtp+=~/.vim,~/.vim/after
+se rtp^=~/.vim
+se rtp+=~/.vim/after
 se vi+=n~/.viminfo
 
 " Wait forever for mappings
@@ -62,14 +63,20 @@ ono aa a>
 vn aa a>
 
 nn ga <C-a>
+nn <C-a> ga
 vn ga g<C-a>
 nn gx <C-x>
 vn gx g<C-x>
+
+nn <C-t> <C-y>
+ino <C-t> <C-y>
 " }}}
 
 " Space leading keys {{{
 no <Space>j <C-d>
 no <Space>k <C-u>
+no <Space>u <C-f>
+no <Space>i <C-b>
 nn <silent> <Space>w :up<CR>
 nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>y :call ClipAll()<CR>
@@ -106,6 +113,8 @@ ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
 ino <C-\>e <CR><Up><End><CR>
 
+cnorea t tabe
+
 "se kmp=dvorak
 
 " ---------------------------- }}}
@@ -114,28 +123,30 @@ ino <C-\>e <CR><Up><End><CR>
 
 call plug#begin('~/.vim/plugged')
 
-Plug 'flazz/vim-colorschemes'
+" Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
 Plug 'itchyny/lightline.vim'
 Plug 'scrooloose/nerdtree'
 Plug 'flosacca/vim-coloresque'
+Plug 'danro/rename.vim'
 
 Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
 Plug 'terryma/vim-multiple-cursors'
-Plug 'danro/rename.vim'
 Plug 'tpope/vim-abolish'
-
 Plug 'mattn/emmet-vim'
 
+" Plug 'sheerun/vim-polyglot'
 Plug 'vim-ruby/vim-ruby'
+Plug 'vim-python/python-syntax'
+Plug 'Vimjas/vim-python-pep8-indent'
 Plug 'pangloss/vim-javascript'
-Plug 'tpope/vim-rails'
-Plug 'vim-language-dept/css-syntax.vim'
-" Plug 'posva/vim-vue'
-Plug 'leafOfTree/vim-vue-plugin'
+Plug 'rust-lang/rust.vim'
 Plug 'gabrielelana/vim-markdown'
+Plug 'vim-language-dept/css-syntax.vim'
+Plug 'leafOfTree/vim-vue-plugin'
+Plug 'tpope/vim-rails'
 
 Plug 'iamcco/markdown-preview.nvim'
 
@@ -195,8 +206,6 @@ aug END
 " }}}
 
 " Emmet {{{
-let g:user_emmet_leader_key='<C-t>'
-
 im <C-u> <Plug>(emmet-expand-abbr)
 nm <C-u> <Plug>(emmet-expand-abbr)
 vm <C-u> <Plug>(emmet-expand-abbr)
@@ -244,11 +253,9 @@ else
   let &t_te .= "\e[3 q"
 end
 
-let g:use_gui_colors = 1
-
 if s:gui
   se go=
-  se gfn=ubuntu_mono:h14
+  se gfn=ubuntu_mono:h16
 
   aug maximize_gui
     au!
@@ -256,10 +263,9 @@ if s:gui
   aug END
 
 elseif $TERM !~ '256'
-  let g:use_gui_colors = 0
+  let g:no_gui_colors = 1
   se nocuc
   se nocul
-  let g:lightline = { 'colorscheme': 'nord' }
 
 else
   if has('termguicolors')
@@ -267,19 +273,16 @@ else
     let &t_8b = "\e[48;2;%lu;%lu;%lum"
     se tgc
   else
-    let g:use_gui_colors = 0
+    let g:no_gui_colors = 1
   end
 end
 
-if !exists('g:lightline')
-  let g:lightline = { 'colorscheme': 'gruvbox' }
-end
-
-if g:use_gui_colors
+if !get(g:, 'no_gui_colors', 0)
   let g:gruvbox_italic = 0
   colo gruvbox
   se bg=dark
   hi! link Operator GruvboxRed
+  let g:lightline = { 'colorscheme': 'gruvbox' }
 
 else
   se t_Co=256
@@ -291,13 +294,10 @@ end
 " Format --------------------- {{{
 
 se ts=2
-se sw=2
+se sw=0
+se sts=-1
 se et
 se si
-
-" ---------------------------- }}}
-
-" File type specific --------- {{{
 
 aug add_file_type
   au!
@@ -312,9 +312,13 @@ let g:sh_no_error = 1
 let g:tex_flavor = 'latex'
 let g:tex_no_error = 1
 
+let g:asmsyntax = 'masm'
+
+let g:python_highlight_all = 1
+let g:python_highlight_space_errors = 0
+
 let g:ruby_indent_assignment_style = 'variable'
 
-" let g:vim_vue_plugin_load_full_syntax = 1
 let g:vim_vue_plugin_use_scss = 1
 let g:vim_vue_plugin_highlight_vue_attr = 1
 let g:vim_vue_plugin_highlight_vue_keyword = 1
@@ -324,9 +328,8 @@ hi link jsParensError NONE
 func! FileTypeConfig()
   setl fo-=ro
 
-  if &ft =~ '\v^(c|cpp|make)$'
+  if &ft =~ '\v^(make|c|cpp|masm)$'
     setl ts=4
-    setl sw=4
   end
 
   if &ft =~ '\v^(make)$'
@@ -387,7 +390,9 @@ func! PureTextConfig()
     setl wrap
     if s:win_gui
       setl slm=mouse
-      star
+      if wordcount()['chars'] == 0
+        star
+      end
     end
   end
 endf
