@@ -383,6 +383,43 @@ func! FileTypeConfig()
   end
 endf
 
+func! BinReadPost()
+  if &fenc == 'latin1'
+    se ft=text
+    setl fdm=manual
+    setl bin
+    %!xxd
+    setl nobin
+  end
+endf
+
+func! BinWritePre()
+  if &fenc == 'latin1'
+    let b:cursor_pos = getpos('.')
+    %y c
+    %s/\v^(\x{8}:)? ?((\x\x)+( (\x\x)+)*)?( *|  .*)$/\2/g
+    %!xxd -p -r
+    setl bin
+  end
+endf
+
+func! BinWritePost()
+  if &fenc == 'latin1'
+    setl nobin
+    %d _
+    put! c
+    $d _
+    call setpos('.', b:cursor_pos)
+  end
+endf
+
+aug binary_config
+  au!
+  au BufRead * sil call BinReadPost()
+  au BufWrite * sil call BinWritePre()
+  au BufWritePost * sil call BinWritePost()
+aug END
+
 func! PureTextConfig()
   if &ft =~ '\v^(text)$' && &bt != 'help'
     setl nocuc
