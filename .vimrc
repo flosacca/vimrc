@@ -33,9 +33,8 @@ aug END
 
 " Global Mappings ------------ {{{
 
-" Disable some keys {{{
+" Unmapping {{{
 sil! vu <C-x>
-
 nn <C-q> <Nop>
 " }}}
 
@@ -46,41 +45,22 @@ no <silent> q :call Quit()<CR>
 no <silent> Q :qa<CR>
 no gq q
 
-map <C-h> <C-w>h
-map <C-j> <C-w>j
-map <C-k> <C-w>k
-map <C-l> <C-w>l
-
-vn <RightMouse> "*y
-
-ono ir i]
-vn ir i]
-ono ar a]
-vn ar a]
-ono ia i>
-vn ia i>
-ono aa a>
-vn aa a>
-
-nn ga <C-a>
-nn <C-a> ga
-vn ga g<C-a>
-nn gx <C-x>
-vn gx g<C-x>
-
-nn <C-t> <C-y>
-ino <C-t> <C-y>
+nn <silent> <Space>w :up<CR>
 " }}}
 
-" Space leading keys {{{
+" Moving {{{
+no <Space>h gT
+no <Space>l gt
+
 no <Space>j <C-d>
 no <Space>k <C-u>
-no <Space>u <C-f>
-no <Space>i <C-b>
-nn <silent> <Space>w :up<CR>
-nn <silent> <Space>r :redraw!<CR>
-nn <silent> <Space>y :call ClipAll()<CR>
-nn <silent> <Space>p :let &paste=!&paste<CR>
+no <Space>u <PageDown>
+no <Space>i <PageUp>
+
+no <C-h> <C-w>h
+no <C-j> <C-w>j
+no <C-k> <C-w>k
+no <C-l> <C-w>l
 " }}}
 
 " Search & Replace {{{
@@ -91,11 +71,44 @@ nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
 
 vn <silent> s :call VSub('g')<CR>
 
-nn <silent> crB :call SplitBraces()<CR>
+nn <silent> crv :call SplitBraces()<CR>
 
-nn <silent> <Space>n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
-nn <silent> <Space>N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
+nn <silent> n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
+nn <silent> N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
+nn <Space>n n
+nn <Space>N N
 " }}}
+
+" Text objects {{{
+func! TextObjMap(lhs, rhs)
+  exe printf('vn a%s a%s', a:lhs, a:rhs)
+  exe printf('ono a%s a%s', a:lhs, a:rhs)
+  exe printf('vn i%s i%s', a:lhs, a:rhs)
+  exe printf('ono i%s i%s', a:lhs, a:rhs)
+endf
+
+call TextObjMap('r', ']')
+call TextObjMap('a', '>')
+call TextObjMap('v', '}')
+" }}}
+
+" Utils {{{
+nn ga <C-a>
+vn ga g<C-a>
+nn gx <C-x>
+vn gx g<C-x>
+nn <C-a> ga
+
+nn gt :tabe<Space>
+nn <silent> <Space>r :redraw!<CR>
+nn <silent> <Space>p :let &paste=!&paste<CR>
+
+ino <C-\><CR> <End><CR>
+ino <C-\><BS> <Up><End><CR>
+ino <C-\>e <CR><Up><End><CR>
+
+vn <RightMouse> "*y
+nn <silent> <Space>y :call ClipAll()<CR>
 
 if s:win_gui
   nn <silent> <F8> :call Run()<CR><CR>
@@ -105,17 +118,12 @@ else
   nn <silent> <F9> :up<CR>:call Run()<CR>
 end
 
-let g:mapleader=' '
-
 no <M-x> :
+cno <M-j> <Down>
+cno <M-k> <Up>
 
-ino <C-\><CR> <End><CR>
-ino <C-\><BS> <Up><End><CR>
-ino <C-\>e <CR><Up><End><CR>
-
-cnorea t tabe
-
-"se kmp=dvorak
+" se kmp=dvorak
+" }}}
 
 " ---------------------------- }}}
 
@@ -209,12 +217,22 @@ aug END
 im <C-u> <Plug>(emmet-expand-abbr)
 nm <C-u> <Plug>(emmet-expand-abbr)
 vm <C-u> <Plug>(emmet-expand-abbr)
+
+nn <C-t> <C-y>
+ino <C-t> <C-y>
 " }}}
 
 " Others {{{
-nm gS <Plug>TComment_gcc
+let g:surround_118 = "{\r}"
+
+nm dsv ds}
+nm csv cs}
+
+nm gm <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
+
+let g:mkdp_preview_options = { 'disable_sync_scroll': 1 }
 
 let g:markdown_enable_spell_checking = 0
 
@@ -293,6 +311,8 @@ end
 
 " Format --------------------- {{{
 
+com! -nargs=1 Tab setl ts=<args> | setl sw=0 | setl sts=-1
+
 se ts=2
 se sw=0
 se sts=-1
@@ -302,6 +322,8 @@ se si
 aug add_file_type
   au!
   au BufRead *.pgf se ft=tex
+  au BufRead *.s se ft=ia64
+  au BufRead *.asm,*.inc se ft=masm
 aug END
 
 let g:c_no_curly_error = 1
@@ -311,8 +333,6 @@ let g:sh_no_error = 1
 
 let g:tex_flavor = 'latex'
 let g:tex_no_error = 1
-
-let g:asmsyntax = 'masm'
 
 let g:python_highlight_all = 1
 let g:python_highlight_space_errors = 0
@@ -350,6 +370,7 @@ func! FileTypeConfig()
   end
 
   if &ft == 'markdown'
+    setl wrap
     call LSMap('nn', '<F8>', 'Run()', 0)
     call LSMap('ino', '<F8>', 'Run()', 0)
   end
@@ -384,7 +405,7 @@ func! FileTypeConfig()
 endf
 
 func! BinReadPost()
-  if &fenc == 'latin1'
+  if &fenc == 'latin1' && &bt != 'help'
     se ft=text
     setl fdm=manual
     setl bin
@@ -527,15 +548,15 @@ endf
 
 let g:cxxflags = ['-std=c++14']
 let g:cflags = ['-std=c99']
+let g:ldflags = []
+if s:win
+   call add(g:ldflags, '-Wl,--stack=268435456')
+end
 
 func! Compile(...)
   up
   if &ft =~ '\v^(c|cpp)$'
     if !Make()
-      let ld_flags = []
-      if s:win
-        let ld_flags += ['-Wl,--stack=268435456']
-      end
 
       if &ft == 'cpp'
         let cmd = ["g++", g:cxxflags]
@@ -544,7 +565,7 @@ func! Compile(...)
       end
       let flags = cmd[1] + get(a:, 1, [])
 
-      exe '!' . join([cmd[0]] + flags + ['-o "%<" "%"'] + ld_flags)
+      exe '!' . join([cmd[0]] + flags + ['-o "%<" "%"'] + g:ldflags)
     end
   elseif &ft == 'tex'
     !xelatex "%"
