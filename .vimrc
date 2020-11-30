@@ -1,3 +1,5 @@
+" vimrc
+
 " General -------------------- {{{
 
 se nocp
@@ -42,10 +44,12 @@ nn <C-q> <Nop>
 nn U <C-r>
 
 no <silent> q :call Quit()<CR>
-no <silent> Q :qa<CR>
+no <silent> Q :call QuitAll()<CR>
 no gq q
 
 nn <silent> <Space>w :up<CR>
+
+vn <silent> p :<C-u>call VPut()<CR>
 " }}}
 
 " Moving {{{
@@ -54,8 +58,9 @@ no <Space>l gt
 
 no <Space>j <C-d>
 no <Space>k <C-u>
-no <Space>u <PageDown>
-no <Space>i <PageUp>
+no <Space>u <C-f>
+no <Space>i <C-b>
+no <silent> <Space>v :<C-u>call ViewingMode()<CR>
 
 no <C-h> <C-w>h
 no <C-j> <C-w>j
@@ -69,7 +74,8 @@ nn <silent> & :&&<CR>
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
 
-vn <silent> s :call VSub('g')<CR>
+" vn <silent> s :call VSub('g')<CR>
+vn s :s//g<Left><Left>
 
 nn <silent> crv :call SplitBraces()<CR>
 
@@ -107,7 +113,7 @@ ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
 ino <C-\>e <CR><Up><End><CR>
 
-vn <RightMouse> "*y
+vn <RightMouse> "+y
 nn <silent> <Space>y :call ClipAll()<CR>
 
 if s:win_gui
@@ -228,7 +234,7 @@ let g:surround_118 = "{\r}"
 nm dsv ds}
 nm csv cs}
 
-nm gm <Plug>TComment_gcc
+nm gn <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
 
@@ -273,7 +279,7 @@ end
 
 if s:gui
   se go=
-  se gfn=ubuntu_mono:h16
+  se gfn=ubuntu_mono:h14
 
   aug maximize_gui
     au!
@@ -321,10 +327,19 @@ se si
 
 aug add_file_type
   au!
-  au BufRead *.pgf se ft=tex
-  au BufRead *.s se ft=ia64
-  au BufRead *.asm,*.inc se ft=masm
+  au BufRead * call AddFileType()
 aug END
+
+func! AddFileType()
+  let ext = expand('%:e')
+  if ext ==? 'pgf'
+    se ft=tex
+  elseif ext ==? 's'
+    " se ft=asm
+  elseif ext =~? '\v^(asm|inc)$'
+    se ft=masm
+  end
+endf
 
 let g:c_no_curly_error = 1
 
@@ -348,7 +363,7 @@ hi link jsParensError NONE
 func! FileTypeConfig()
   setl fo-=ro
 
-  if &ft =~ '\v^(make|c|cpp|masm)$'
+  if &ft =~ '\v^(make|c|cpp|java|masm)$'
     setl ts=4
   end
 
@@ -356,23 +371,28 @@ func! FileTypeConfig()
     setl noet
   end
 
-  if &ft =~ '\v^(c|cpp)$'
-    setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
-
-    let f = [['<F5>', 'Debug()']]
-    call add(f, ['<F6>', 'Compile(["-O2"])'])
-    call add(f, ['<F7>', 'Compile(["-g3"])'])
-    call add(f, ['<F9>', ['call Compile(["-g3"])', 'call Run()']])
-
-    for i in range(4)
-      call LSMap('nn', f[i][0], f[i][1], f[i][0] != '<F5>')
-    endfor
+  if &ft == '\v^(vue)$'
+    setl isk+=-
   end
 
-  if &ft == 'markdown'
-    setl wrap
-    call LSMap('nn', '<F8>', 'Run()', 0)
-    call LSMap('ino', '<F8>', 'Run()', 0)
+  if &ft =~ '\v^(c|cpp|java)$'
+    setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
+  end
+
+  if &ft =~ '\v^(c|cpp)$'
+    call LSMap('nn', '<F5>', 'Debug()', 0)
+    call LSMap('nn', '<F6>', 'Compile(["-O2"])', 1)
+    call LSMap('nn', '<F7>', 'Compile(["-g3"])', 1)
+    call LSMap('nn', '<F9>', ['call Compile(["-g3"])', 'call Run()'], 1)
+  end
+
+  if &ft =~ '\v^(java|masm|tex)$'
+    call LSMap('nn', '<F7>', 'Compile()', 1)
+    call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
+  end
+
+  if &ft =~ '^s[ca]ss$'
+    call LSMap('nn', '<F7>', 'Compile()', 1)
   end
 
   if &ft == 'tex'
@@ -386,21 +406,17 @@ func! FileTypeConfig()
 
     call LSMap('nn', '<F5>', 'InsertTeXEnv()', 0)
     call LSMap('ino', '<F5>', 'InsertTeXEnv()', 0)
-    call LSMap('nn', '<F7>', 'Compile()', 1)
-    call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
+  end
+
+  if &ft == 'markdown'
+    setl wrap
+    call LSMap('nn', '<F8>', 'Run()', 0)
+    call LSMap('ino', '<F8>', 'Run()', 0)
   end
 
   if &ft =~ '^eruby'
     ino <buffer> <C-\>d <%  %><Left><Left><Left>
     ino <buffer> <C-\>f <%=  %><Left><Left><Left>
-  end
-
-  if &ft =~ '^s[ca]ss$'
-    call LSMap('nn', '<F7>', 'Compile()', 1)
-  end
-
-  if &ft == 'vue'
-    setl isk+=-
   end
 endf
 
@@ -457,7 +473,7 @@ endf
 
 aug file_type_config
   au!
-  au BufEnter * call FileTypeConfig()
+  au BufEnter,FileType * call FileTypeConfig()
   au BufRead,BufNewFile * call PureTextConfig()
 aug END
 
@@ -496,15 +512,26 @@ func! LSMap(map, key, cmd, expect_pause, ...)
   elseif get(a:, 1, 1)
     let cmd = 'call ' . cmd
   end
-  let cmd = ':' . cmd . '<CR>'
+  " TODO
+  if a:expect_pause && !s:win_gui
+    let pause_cmd = [
+\      'sil exe "!echo && echo Press any key to continue"',
+\      'sil exe "!read -sN1"',
+\      'redraw!'
+\    ]
+    let cmd = join([':sil ' . cmd] + pause_cmd, '<Bar>') . '<CR>'
+  else
+    let cmd = ':' . cmd . '<CR>'
+  end
   if a:map[0] ==# 'i'
     let cmd = '<C-o>' . cmd
   end
   let cmd = printf('%s <buffer> <silent> %s %s', a:map, a:key, cmd)
-  if a:expect_pause && s:win_gui
-    exe cmd . '<CR>'
-  else
-    exe cmd
+  exe cmd
+  if a:expect_pause
+    if s:win_gui
+      exe cmd . '<CR>'
+    end
   end
 endf
 " }}}
@@ -533,12 +560,20 @@ com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 
 " Compile & Run -------------- {{{
 func! Make(...)
+  if expand('%:e') =~ '\v^(|h|hpp)$'
+    !cpp-syntax "%"
+    return 1
+  end
   let dir = '.'
   while 1
     if filereadable(dir . '/Makefile')
-      exe printf('!cd %s && make %s', dir, a:0 ? a:1 : '')
+      exe printf('!cd %s && %s %s', dir, get(a:, 2, 'make'), get(a:, 1, ''))
       return 1
     end
+
+    " prevent further search
+    return 0
+
     if fnamemodify(dir, ':p') == fnamemodify(dir . '/..', ':p')
       return 0
     end
@@ -557,43 +592,44 @@ func! Compile(...)
   up
   if &ft =~ '\v^(c|cpp)$'
     if !Make()
-
       if &ft == 'cpp'
         let cmd = ["g++", g:cxxflags]
       else
         let cmd = ['gcc', g:cflags]
       end
       let flags = cmd[1] + get(a:, 1, [])
-
       exe '!' . join([cmd[0]] + flags + ['-o "%<" "%"'] + g:ldflags)
     end
+  elseif &ft == 'java'
+    !javac "%"
+  elseif &ft == 'masm'
+    call Make('', 'mingw32-make')
   elseif &ft == 'tex'
     !xelatex "%"
   elseif &ft =~ '^s[ca]ss$'
     !scss --style=expanded "%" "%<.css"
-  elseif &ft == 'coffee'
-    sil make
-    redraw!
   end
 endf
 
 func! Run()
-  if &ft == 'autohotkey'
-    call WinOpen('"%"', 0, 1)
-  elseif &ft =~ '\v^(c|cpp)$'
+  if &ft =~ '\v^(c|cpp|masm)$'
     if !Make('run')
       !"./%<"
     end
-  elseif &ft == 'markdown'
-    MarkdownPreview
+  elseif &ft == 'java'
+    !java "%<"
   elseif &ft == 'python'
     !python3 "%"
   elseif &ft == 'ruby'
     !ruby "%"
   elseif &ft == 'javascript'
     !node "%"
+  elseif &ft == 'autohotkey'
+    call WinOpen('"%"', 0, 1)
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
+  elseif &ft == 'markdown'
+    MarkdownPreview
   else
     if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
       !"./%"
@@ -621,14 +657,22 @@ func! Quit()
   end
 endf
 
+func! QuitAll()
+  if bufnr('$') == 1
+    call Quit()
+  else
+    qa
+  end
+endf
+
 func! SplitBraces()
   exe "norm! viB\el%ls\n\e``%hs\n"
 endf
 
 func! ClipAll()
   try
-    %y *
-    let @* = @*[:-2]
+    %y +
+    let @+ = @+[:-2]
   catch
     let fixeol = &fixeol
     let eol = &eol
@@ -651,6 +695,35 @@ func! VSub(...) range
   redraw
   let pat = '\m\%V\%(' . pat . '\m\)'
   call TryExec(printf("'<,'>s/%s/%s/%s", pat, sub, get(a:, 1, '')), '486')
+endf
+
+func! VPut() range
+  let reg = @"
+  exe printf('norm! gv"%sp', v:register)
+  let @" = reg
+endf
+
+func! ViewingMode()
+  echo
+  while 1
+    let cmd = nr2char(getchar())
+    if cmd ==# 'q'
+      break
+    elseif cmd ==# 'j'
+      exe "norm! \<C-d>0"
+    elseif cmd ==# 'k'
+      exe "norm! \<C-u>0"
+    elseif cmd ==# 'u'
+      exe "norm! \<C-f>0"
+    elseif cmd ==# 'i'
+      exe "norm! \<C-b>0"
+    elseif cmd ==# 'g'
+      norm! gg0
+    elseif cmd ==# 'G'
+      norm! G0
+    end
+    redraw
+  endw
 endf
 
 func! CenterAfter(ncmd)
@@ -680,7 +753,9 @@ func! ShowSearch(ncmd)
 endf
 
 func! InsertTeXEnv()
-  exe "norm! B\"cy$C\\begin{}\n\\end{}\e\"cPk$\"cP$"
+  let reg = @"
+  exe "norm! BC\\begin{}\n\\end{}\ePk$P$"
+  let @" = reg
 endf
 " }}}
 
