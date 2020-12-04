@@ -21,6 +21,8 @@ se noto
 se ttimeout
 se ttm=0
 
+se nosol
+
 let s:win = has('win32') || has('win64')
 let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
@@ -50,6 +52,9 @@ no gq q
 nn <silent> <Space>w :up<CR>
 
 vn <silent> p :<C-u>call VPut()<CR>
+vn <silent> P "0p
+
+no gg gg0
 " }}}
 
 " Moving {{{
@@ -116,13 +121,13 @@ ino <C-\>e <CR><Up><End><CR>
 vn <RightMouse> "+y
 nn <silent> <Space>y :call ClipAll()<CR>
 
-if s:win_gui
-  nn <silent> <F8> :call Run()<CR><CR>
-  nn <silent> <F9> :up<CR>:call Run()<CR><CR>
-else
-  nn <silent> <F8> :call Run()<CR>
-  nn <silent> <F9> :up<CR>:call Run()<CR>
-end
+" if s:win_gui
+"   nn <silent> <F8> :call Run()<CR><CR>
+"   nn <silent> <F9> :up<CR>:call Run()<CR><CR>
+" else
+"   nn <silent> <F8> :call Run()<CR>
+"   nn <silent> <F9> :up<CR>:call Run()<CR>
+" end
 
 no <M-x> :
 cno <M-j> <Down>
@@ -134,6 +139,12 @@ cno <M-k> <Up>
 " ---------------------------- }}}
 
 " Plugins -------------------- {{{
+
+if empty(glob('~/.vim/autoload/plug.vim'))
+  !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  au VimEnter * PlugInstall --sync | so $MYVIMRC
+end
 
 call plug#begin('~/.vim/plugged')
 
@@ -200,6 +211,7 @@ nn <silent> <Space>t :NERDTreeToggle<CR>
 let g:NERDTreeChDirMode = 2
 
 func! AutoChdir()
+  let full_path = expand('%:h')
   if exists('b:NERDTree')
     let path = b:NERDTree.root.path
     if s:win
@@ -207,10 +219,8 @@ func! AutoChdir()
     else
       let full_path = join([''] + path.pathSegments, '/')
     end
-    exe 'cd ' . full_path
-  else
-    exe 'cd ' . expand('%:h')
   end
+  exe 'cd ' . substitute(expand('%:h'), '\', '/', 'g')
 endf
 
 aug auto_chdir
@@ -363,6 +373,8 @@ hi link jsParensError NONE
 func! FileTypeConfig()
   setl fo-=ro
 
+  call LSMap('nn', '<F8>', 'Run()', 1)
+
   if &ft =~ '\v^(make|c|cpp|java|masm)$'
     setl ts=4
   end
@@ -508,9 +520,15 @@ endf
 func! LSMap(map, key, cmd, expect_pause, ...)
   let cmd = a:cmd
   if type(cmd) == 3
+    if a:expect_pause && !s:win_gui
+      call map(cmd, '"sil " . v:val')
+    end
     let cmd = join(cmd, '<Bar>')
   elseif get(a:, 1, 1)
     let cmd = 'call ' . cmd
+    if a:expect_pause && !s:win_gui
+      let cmd = 'sil ' . cmd
+    end
   end
   " TODO
   if a:expect_pause && !s:win_gui
@@ -519,7 +537,7 @@ func! LSMap(map, key, cmd, expect_pause, ...)
 \      'sil exe "!read -sN1"',
 \      'redraw!'
 \    ]
-    let cmd = join([':sil ' . cmd] + pause_cmd, '<Bar>') . '<CR>'
+    let cmd = join([':' . cmd] + pause_cmd, '<Bar>') . '<CR>'
   else
     let cmd = ':' . cmd . '<CR>'
   end
@@ -707,7 +725,7 @@ func! ViewingMode()
   echo
   while 1
     let cmd = nr2char(getchar())
-    if cmd ==# 'q'
+    if cmd ==# 'q' || cmd == "\e"
       break
     elseif cmd ==# 'j'
       exe "norm! \<C-d>0"
@@ -721,6 +739,10 @@ func! ViewingMode()
       norm! gg0
     elseif cmd ==# 'G'
       norm! G0
+    elseif cmd == '0'
+      norm! 0
+    elseif cmd == '$'
+      norm! $
     end
     redraw
   endw
