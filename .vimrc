@@ -93,10 +93,10 @@ nn <Space>N N
 
 " Text objects {{{
 func! TextObjMap(lhs, rhs)
-  exe printf('vn a%s a%s', a:lhs, a:rhs)
-  exe printf('ono a%s a%s', a:lhs, a:rhs)
-  exe printf('vn i%s i%s', a:lhs, a:rhs)
-  exe printf('ono i%s i%s', a:lhs, a:rhs)
+  exe printf('vm a%s a%s', a:lhs, a:rhs)
+  exe printf('om a%s a%s', a:lhs, a:rhs)
+  exe printf('vm i%s i%s', a:lhs, a:rhs)
+  exe printf('om i%s i%s', a:lhs, a:rhs)
 endf
 
 call TextObjMap('r', ']')
@@ -191,7 +191,8 @@ Plug 'iamcco/markdown-preview.nvim'
 " Plug 'kana/vim-altr'
 " Plug 'kana/vim-submode'
 " Plug 'kana/vim-arpeggio'
-" Plug 'kana/vim-textobj-user'
+Plug 'kana/vim-textobj-user'
+Plug 'kana/vim-textobj-syntax'
 
 call plug#end()
 
@@ -256,12 +257,44 @@ nn <C-t> <C-y>
 ino <C-t> <C-y>
 " }}}
 
+" Text objects {{{
+call TextObjMap('j', 'y')
+
+let g:surround_118 = "{\r}" " v
+let g:surround_109 = "$\r$" " m
+let g:surround_100 = "$$ \r $$" " d
+
+" nm dsv ds}
+" nm csv cs}
+" nm dsm ds$
+" nm csm cs$
+
+call textobj#user#plugin('latex', {
+\   'environment': {
+\     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
+\     'select-a': 'ae',
+\     'select-i': 'ie',
+\   },
+\  'math-a': {
+\     'pattern': '\$[^$]*\$',
+\     'select': ['a$', 'am'],
+\   },
+\  'math-i': {
+\     'pattern': '\v\$\s*\zs([^$]&\S)+(\s+([^$]&\S)+)*\ze\s*\$',
+\     'select': ['i$', 'im'],
+\   },
+\  'displaymath-a': {
+\     'pattern': '\$\$[^$]*\$\$',
+\     'select': 'ad',
+\   },
+\  'displaymath-i': {
+\     'pattern': '\v\$\$\s*\zs([^$]&\S)+(\s+([^$]&\S)+)*\ze\s*\$\$',
+\     'select': 'id',
+\   },
+\ })
+" }}}
+
 " Others {{{
-let g:surround_118 = "{\r}"
-
-nm dsv ds}
-nm csv cs}
-
 map gn <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
