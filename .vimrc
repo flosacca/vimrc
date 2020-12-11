@@ -52,7 +52,8 @@ no gq q
 nn <silent> <Space>w :up<CR>
 
 vn <silent> p :<C-u>call VPut()<CR>
-vn <silent> P "0p
+vn P "0p
+vn gp p
 
 no gg gg0
 " }}}
@@ -118,7 +119,10 @@ ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
 ino <C-\>e <CR><Up><End><CR>
 
-vn <RightMouse> "+y
+cno ` <C-r>
+
+vn <LeftMouse> "+y
+" vn <RightMouse> "+y
 nn <silent> <Space>y :call ClipAll()<CR>
 
 " if s:win_gui
@@ -141,27 +145,21 @@ cno <M-k> <Up>
 " Plugins -------------------- {{{
 
 if empty(glob('~/.vim/autoload/plug.vim'))
-  !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+  sil !curl -sSLo ~/.vim/autoload/plug.vim --create-dirs
         \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   au VimEnter * PlugInstall --sync | so $MYVIMRC
 end
 
 call plug#begin('~/.vim/plugged')
 
+" Basic --------------------------
 " Plug 'flazz/vim-colorschemes'
 Plug 'morhetz/gruvbox'
 Plug 'itchyny/lightline.vim'
 Plug 'scrooloose/nerdtree'
-Plug 'flosacca/vim-coloresque'
-Plug 'danro/rename.vim'
+" --------------------------------
 
-Plug 'easymotion/vim-easymotion'
-Plug 'tpope/vim-surround'
-Plug 'vim-scripts/tComment'
-Plug 'terryma/vim-multiple-cursors'
-Plug 'tpope/vim-abolish'
-Plug 'mattn/emmet-vim'
-
+" Syntax -------------------------
 " Plug 'sheerun/vim-polyglot'
 Plug 'vim-ruby/vim-ruby'
 Plug 'vim-python/python-syntax'
@@ -171,9 +169,29 @@ Plug 'rust-lang/rust.vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
 Plug 'leafOfTree/vim-vue-plugin'
-Plug 'tpope/vim-rails'
+Plug 'flosacca/vim-coloresque'
+" --------------------------------
 
+" Operation ----------------------
+Plug 'easymotion/vim-easymotion'
+Plug 'tpope/vim-surround'
+Plug 'vim-scripts/tComment'
+Plug 'terryma/vim-multiple-cursors'
+Plug 'tpope/vim-abolish'
+Plug 'danro/rename.vim'
+Plug 'mattn/emmet-vim'
+Plug 'tpope/vim-rails'
+" --------------------------------
+
+" Extern -------------------------
 Plug 'iamcco/markdown-preview.nvim'
+" --------------------------------
+
+" Plug 'kana/vim-fakeclip'
+" Plug 'kana/vim-altr'
+" Plug 'kana/vim-submode'
+" Plug 'kana/vim-arpeggio'
+" Plug 'kana/vim-textobj-user'
 
 call plug#end()
 
@@ -244,7 +262,7 @@ let g:surround_118 = "{\r}"
 nm dsv ds}
 nm csv cs}
 
-nm gn <Plug>TComment_gcc
+map gn <Plug>TComment_gcc
 
 let g:mkdp_auto_close = 0
 
@@ -374,8 +392,10 @@ func! FileTypeConfig()
   setl fo-=ro
 
   call LSMap('nn', '<F8>', 'Run()', 1)
+  call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
 
-  if &ft =~ '\v^(make|c|cpp|java|masm)$'
+  " if &ft =~ '\v^(make|c|cpp|java|masm)$'
+  if &ft =~ '\v^(make|java|masm)$'
     setl ts=4
   end
 
@@ -578,7 +598,7 @@ com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 
 " Compile & Run -------------- {{{
 func! Make(...)
-  if expand('%:e') =~ '\v^(|h|hpp)$'
+  if expand('%:e') =~ '\v^(|h)$'
     !cpp-syntax "%"
     return 1
   end
