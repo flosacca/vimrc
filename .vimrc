@@ -144,13 +144,27 @@ cno <M-k> <Up>
 
 " Plugins -------------------- {{{
 
-if empty(glob('~/.vim/autoload/plug.vim'))
-  sil !curl -sSLo ~/.vim/autoload/plug.vim --create-dirs
-        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  au VimEnter * PlugInstall --sync | so $MYVIMRC
+let s:plug_path = '~/.vim/autoload/plug.vim'
+
+func! GetPlug()
+  let url = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  sil exe printf('!curl --create-dirs -sLo %s %s', s:plug_path, url)
+  return v:shell_error == 0
+endf
+
+if empty(glob(s:plug_path))
+  if GetPlug()
+    au VimEnter * PlugInstall --sync | so $MYVIMRC
+  end
 end
 
-call plug#begin('~/.vim/plugged')
+let g:has_plug = !empty(glob(s:plug_path))
+
+if g:has_plug
+  call plug#begin('~/.vim/plugged')
+else
+  com! -nargs=* Plug
+end
 
 " Basic --------------------------
 " Plug 'flazz/vim-colorschemes'
@@ -196,7 +210,9 @@ Plug 'iamcco/markdown-preview.nvim'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-syntax'
 
-call plug#end()
+if g:has_plug
+  call plug#end()
+end
 
 ru! macros/matchit.vim
 
@@ -266,34 +282,37 @@ let g:surround_118 = "{\r}" " v
 let g:surround_109 = "$\r$" " m
 let g:surround_100 = "$$ \r $$" " d
 
+" Needed only when using noremaps in surround
 " nm dsv ds}
 " nm csv cs}
 " nm dsm ds$
 " nm csm cs$
 
-call textobj#user#plugin('latex', {
-\   'environment': {
-\     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
-\     'select-a': 'ae',
-\     'select-i': 'ie',
-\   },
-\  'math-a': {
-\     'pattern': '\$\_[^$]*\$',
-\     'select': ['a$', 'am'],
-\   },
-\  'math-i': {
-\     'pattern': '\v\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$',
-\     'select': ['i$', 'im'],
-\   },
-\  'displaymath-a': {
-\     'pattern': '\$\$\_[^$]*\$\$',
-\     'select': 'ad',
-\   },
-\  'displaymath-i': {
-\     'pattern': '\v\$\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$\$',
-\     'select': 'id',
-\   },
-\ })
+if exists('*textobj#user#plugin')
+  call textobj#user#plugin('latex', {
+  \   'environment': {
+  \     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
+  \     'select-a': 'ae',
+  \     'select-i': 'ie',
+  \   },
+  \  'math-a': {
+  \     'pattern': '\$\_[^$]*\$',
+  \     'select': ['a$', 'am'],
+  \   },
+  \  'math-i': {
+  \     'pattern': '\v\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$',
+  \     'select': ['i$', 'im'],
+  \   },
+  \  'displaymath-a': {
+  \     'pattern': '\$\$\_[^$]*\$\$',
+  \     'select': 'ad',
+  \   },
+  \  'displaymath-i': {
+  \     'pattern': '\v\$\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$\$',
+  \     'select': 'id',
+  \   },
+  \ })
+end
 " }}}
 
 " Others {{{
@@ -351,8 +370,6 @@ if s:gui
 
 elseif $TERM !~ '256'
   let g:no_gui_colors = 1
-  se nocuc
-  se nocul
 
 else
   if has('termguicolors')
@@ -364,15 +381,21 @@ else
   end
 end
 
+if empty(getcompletion('gruvbox', 'color'))
+  let g:no_gui_colors = 1
+end
+
 if !get(g:, 'no_gui_colors', 0)
+  se bg=dark
   let g:gruvbox_italic = 0
   colo gruvbox
-  se bg=dark
   hi! link Operator GruvboxRed
   let g:lightline = { 'colorscheme': 'gruvbox' }
 
 else
   se t_Co=256
+  se nocuc
+  se nocul
   colo desert
 end
 
