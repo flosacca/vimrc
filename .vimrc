@@ -21,6 +21,7 @@ se noto
 se ttimeout
 se ttm=0
 
+se kp=
 se nosol
 
 let s:win = has('win32') || has('win64')
@@ -47,7 +48,7 @@ nn U <C-r>
 
 no <silent> q :call Quit()<CR>
 no <silent> Q :call QuitAll()<CR>
-no gq q
+nn gq q
 
 nn <silent> <Space>w :up<CR>
 
@@ -121,8 +122,7 @@ ino <C-\>e <CR><Up><End><CR>
 
 cno ` <C-r>
 
-vn <LeftMouse> "+y
-" vn <RightMouse> "+y
+vn <LeftMouse> <Esc>gv"+y
 nn <silent> <Space>y :call ClipAll()<CR>
 
 " if s:win_gui
@@ -169,7 +169,9 @@ Plug 'rust-lang/rust.vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
 Plug 'leafOfTree/vim-vue-plugin'
-Plug 'flosacca/vim-coloresque'
+Plug 'rhysd/vim-llvm'
+Plug 'dylon/vim-antlr'
+Plug 'gko/vim-coloresque'
 " --------------------------------
 
 " Operation ----------------------
@@ -276,19 +278,19 @@ call textobj#user#plugin('latex', {
 \     'select-i': 'ie',
 \   },
 \  'math-a': {
-\     'pattern': '\$[^$]*\$',
+\     'pattern': '\$\_[^$]*\$',
 \     'select': ['a$', 'am'],
 \   },
 \  'math-i': {
-\     'pattern': '\v\$\s*\zs([^$]&\S)+(\s+([^$]&\S)+)*\ze\s*\$',
+\     'pattern': '\v\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$',
 \     'select': ['i$', 'im'],
 \   },
 \  'displaymath-a': {
-\     'pattern': '\$\$[^$]*\$\$',
+\     'pattern': '\$\$\_[^$]*\$\$',
 \     'select': 'ad',
 \   },
 \  'displaymath-i': {
-\     'pattern': '\v\$\$\s*\zs([^$]&\S)+(\s+([^$]&\S)+)*\ze\s*\$\$',
+\     'pattern': '\v\$\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$\$',
 \     'select': 'id',
 \   },
 \ })
@@ -427,8 +429,7 @@ func! FileTypeConfig()
   call LSMap('nn', '<F8>', 'Run()', 1)
   call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
 
-  " if &ft =~ '\v^(make|c|cpp|java|masm)$'
-  if &ft =~ '\v^(make|java|masm)$'
+  if &ft =~ '\v^((make|c|cpp|java|masm)$|antlr)'
     setl ts=4
   end
 
@@ -442,6 +443,13 @@ func! FileTypeConfig()
 
   if &ft =~ '\v^(c|cpp|java)$'
     setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
+  end
+
+  if &ft =~ '\v^(python|ruby)$'
+    com! NextDef call search('\v^\s*(def|class)>')
+    com! PrevDef call search('\v^\s*(def|class)>', 'b')
+    call LSMap('no', ']f', 'NextDef', 0, 0)
+    call LSMap('no', '[f', 'PrevDef', 0, 0)
   end
 
   if &ft =~ '\v^(c|cpp)$'
@@ -590,9 +598,9 @@ func! LSMap(map, key, cmd, expect_pause, ...)
 \      'sil exe "!read -sN1"',
 \      'redraw!'
 \    ]
-    let cmd = join([':' . cmd] + pause_cmd, '<Bar>') . '<CR>'
+    let cmd = join([':<C-u>' . cmd] + pause_cmd, '<Bar>') . '<CR>'
   else
-    let cmd = ':' . cmd . '<CR>'
+    let cmd = ':<C-u>' . cmd . '<CR>'
   end
   if a:map[0] ==# 'i'
     let cmd = '<C-o>' . cmd
@@ -780,6 +788,8 @@ func! ViewingMode()
     let cmd = nr2char(getchar())
     if cmd ==# 'q' || cmd == "\e"
       break
+    elseif cmd ==# 'Q'
+      call QuitAll()
     elseif cmd ==# 'j'
       exe "norm! \<C-d>0"
     elseif cmd ==# 'k'
