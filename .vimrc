@@ -41,6 +41,7 @@ aug END
 " Unmapping {{{
 sil! vu <C-x>
 nn <C-q> <Nop>
+nn <Space> <Nop>
 " }}}
 
 " Basic keys {{{
@@ -80,11 +81,10 @@ nn <silent> & :&&<CR>
 
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
+nn g/ /^\s*
 
 " vn <silent> s :call VSub('g')<CR>
 vn s :s//g<Left><Left>
-
-nn <silent> crv :call SplitBraces()<CR>
 
 nn <silent> n :call CenterAfter('n')<CR>:call ShowSearch('n')<CR>
 nn <silent> N :call CenterAfter('N')<CR>:call ShowSearch('N')<CR>
@@ -103,6 +103,9 @@ endf
 call TextObjMap('r', ']')
 call TextObjMap('a', '>')
 call TextObjMap('v', '}')
+
+nn <silent> co :sil call ExpandTextObj()<CR>
+nn <silent> cd :sil call CollapseTextObj()<CR>
 " }}}
 
 " Utils {{{
@@ -425,6 +428,10 @@ func! AddFileType()
   elseif ext =~? '\v^(asm|inc)$'
     se ft=masm
   end
+  let base = expand('%:t')
+  if base ==# '.gemrc'
+    se ft=yaml
+  end
 endf
 
 let g:c_no_curly_error = 1
@@ -578,6 +585,21 @@ aug END
 " Functions ------------------ {{{
 
 " Utils ---------------------- {{{
+func! Strip(str, ...)
+  let pat = get(a:, 1, '\_s*')
+  return substitute(a:str, '\v%^' . pat . '(.{-})' . pat . '%$', '\1', '')
+endf
+
+func! LStrip(str, ...)
+  let pat = get(a:, 1, '\_s*')
+  return substitute(a:str, '\v%^' . pat . '(.{-})%$', '\1', '')
+endf
+
+func! RStrip(str, ...)
+  let pat = get(a:, 1, '\_s*')
+  return substitute(a:str, '\v%^(.{-})' . pat . '%$', '\1', '')
+endf
+
 func! TryExec(cmd, ...)
   let s:exception = ''
   let pat = get(a:, 1, '.*')
@@ -767,8 +789,54 @@ func! QuitAll()
   end
 endf
 
-func! SplitBraces()
-  exe "norm! viB\el%ls\n\e``%hs\n"
+func! ExpandTextObj(...)
+  let mid_end_pos = call('CollapseTextObj', a:000)
+  if !empty(mid_end_pos)
+    let left_end_pos = getpos('.')
+    if mid_end_pos == left_end_pos
+      exe "norm! a\n\n\ek"
+    else
+      call setpos('.', mid_end_pos)
+      exe "norm! a\n\e"
+      call setpos('.', left_end_pos)
+      exe "norm! a\n\el"
+    end
+  end
+endf
+
+func! CollapseTextObj(...)
+  let key = a:0 ? a:1 : nr2char(getchar())
+  let regs = [@r, @m, @l]
+  let @r = ''
+  let @m = ''
+  let initial_pos = getpos('.')
+  exe 'norm "rya' . key
+  let left_start_pos = getpos("'[")
+  call setpos('.', initial_pos)
+  exe 'norm "myi' . key
+  call setpos('.', initial_pos)
+  if len(@r) - len(@m) >= 2
+    call setpos('.', left_start_pos)
+    norm! v`[
+    exe 'norm! ' . (col('.') == 1 ? 'k$' : 'h')
+    norm! "ly
+    let @l = RStrip(@l)
+    call setpos('.', initial_pos)
+    norm! v
+    exe 'norm a' . key
+    exe "norm! \"rc\<C-r>\<C-o>l\e"
+    let left_end_pos = getpos('.')
+    let @m = Strip(@m)
+    norm! "mp`]
+    let mid_end_pos = getpos('.')
+    let @r = LStrip(LStrip(@r[len(@l):])[len(@m):])
+    norm! "rp
+    call setpos('.', left_end_pos)
+  else
+    let mid_end_pos = 0
+  end
+  let [@r, @m, @l] = regs
+  return mid_end_pos
 endf
 
 func! ClipAll()
