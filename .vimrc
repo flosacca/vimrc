@@ -45,11 +45,13 @@ nn <Space> <Nop>
 " }}}
 
 " Basic keys {{{
+nn <expr> : FakeCmdLine()
+
 nn U <C-r>
 
 no <silent> q :call Quit()<CR>
 no <silent> Q :call QuitAll()<CR>
-nn gq q
+no gy q
 
 nn <silent> <Space>w :up<CR>
 
@@ -115,7 +117,7 @@ nn gx <C-x>
 vn gx g<C-x>
 nn <C-a> ga
 
-nn gt :tabe<Space>
+" nn gt :tabe<Space>
 nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
 
@@ -773,6 +775,37 @@ endf
 " ---------------------------- }}}
 
 " Commands {{{
+func! FakeCmdLine()
+  let s = ''
+  let t = 't'
+  while 1
+    if get(g:, 'cmdline_debug', 0)
+      echo '^' . s
+    else
+      echo ':' . s
+    end
+    let c = getchar()
+    if type(c) == v:t_number
+      let c = nr2char(c)
+    end
+    if c == "\<BS>"
+      let s = s[:-2]
+    else
+      let s .= c
+    end
+    if s[:len(t) - 1] == t && s[len(t)] =~ '\W'
+      return ':tabe' . s[len(t):]
+    end
+    if t[:len(s) - 1] != s && s =~ '\W'
+      if s[-1:] == "\e"
+        echo ''
+        return "\e"
+      end
+      return ':' . s
+    end
+  endw
+endf
+
 func! Quit()
   if !exists('b:stdin')
     q
@@ -794,12 +827,12 @@ func! ExpandTextObj(...)
   if !empty(mid_end_pos)
     let left_end_pos = getpos('.')
     if mid_end_pos == left_end_pos
-      exe "norm! a\n\n\ek"
+      exe "normal! a\n\n\ek"
     else
       call setpos('.', mid_end_pos)
-      exe "norm! a\n\e"
+      exe "normal! a\n\e"
       call setpos('.', left_end_pos)
-      exe "norm! a\n\el"
+      exe "normal! a\n\el"
     end
   end
 endf
@@ -810,27 +843,27 @@ func! CollapseTextObj(...)
   let @r = ''
   let @m = ''
   let initial_pos = getpos('.')
-  exe 'norm "rya' . key
+  exe 'normal "rya' . key
   let left_start_pos = getpos("'[")
   call setpos('.', initial_pos)
-  exe 'norm "myi' . key
+  exe 'normal "myi' . key
   call setpos('.', initial_pos)
   if len(@r) - len(@m) >= 2
     call setpos('.', left_start_pos)
-    norm! v`[
-    exe 'norm! ' . (col('.') == 1 ? 'k$' : 'h')
-    norm! "ly
+    normal! v`[
+    exe 'normal! ' . (col('.') == 1 ? 'k$' : 'h')
+    normal! "ly
     let @l = RStrip(@l)
     call setpos('.', initial_pos)
-    norm! v
-    exe 'norm a' . key
-    exe "norm! \"rc\<C-r>\<C-o>l\e"
+    normal! v
+    exe 'normal a' . key
+    exe "normal! \"rc\<C-r>\<C-o>l\e"
     let left_end_pos = getpos('.')
     let @m = Strip(@m)
-    norm! "mp`]
+    normal! "mp`]
     let mid_end_pos = getpos('.')
     let @r = LStrip(LStrip(@r[len(@l):])[len(@m):])
-    norm! "rp
+    normal! "rp
     call setpos('.', left_end_pos)
   else
     let mid_end_pos = 0
@@ -869,7 +902,7 @@ endf
 
 func! VPut() range
   let reg = @"
-  exe printf('norm! gv"%sp', v:register)
+  exe printf('normal! gv"%sp', v:register)
   let @" = reg
 endf
 
@@ -882,35 +915,35 @@ func! ViewingMode()
     elseif cmd ==# 'Q'
       call QuitAll()
     elseif cmd ==# 'j'
-      exe "norm! \<C-d>0"
+      exe "normal! \<C-d>0"
     elseif cmd ==# 'k'
-      exe "norm! \<C-u>0"
+      exe "normal! \<C-u>0"
     elseif cmd ==# 'u'
-      exe "norm! \<C-f>0"
+      exe "normal! \<C-f>0"
     elseif cmd ==# 'i'
-      exe "norm! \<C-b>0"
+      exe "normal! \<C-b>0"
     elseif cmd ==# 'g'
-      norm! gg0
+      normal! gg0
     elseif cmd ==# 'G'
-      norm! G0
-    elseif cmd == '0'
-      norm! 0
-    elseif cmd == '$'
-      norm! $
+      normal! G0
+    elseif cmd =~# '[tzb]'
+      exe 'normal! z' . cmd
+    elseif cmd =~# '[HML{}0$]'
+      exe 'normal! ' . cmd
     end
     redraw
   endw
 endf
 
 func! CenterAfter(ncmd)
-  call TryExec('norm! ' . a:ncmd, '486')
+  call TryExec('normal! ' . a:ncmd, '486')
   if s:exception != ''
     return
   end
   if foldclosed(line('.')) != -1
-    norm! zO
+    normal! zO
   end
-  norm! zz
+  normal! zz
 endf
 
 func! ShowSearch(ncmd)
@@ -930,7 +963,7 @@ endf
 
 func! InsertTeXEnv()
   let reg = @"
-  exe "norm! BC\\begin{}\n\\end{}\ePk$P$"
+  exe "normal! BC\\begin{}\n\\end{}\ePk$P$"
   let @" = reg
 endf
 " }}}
