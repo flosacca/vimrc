@@ -4,7 +4,6 @@
 
 se nocp
 se bs=2
-se wak=no
 se noswf
 se ffs=unix,dos
 se enc=utf-8
@@ -127,7 +126,7 @@ ino <C-\>e <CR><Up><End><CR>
 
 cno ` <C-r>
 
-vn <LeftMouse> <Esc>gv"+y
+vn <LeftMouse> "+ygV
 nn <silent> <Space>y :call ClipAll()<CR>
 
 " if s:win_gui
@@ -185,6 +184,7 @@ Plug 'vim-python/python-syntax'
 Plug 'Vimjas/vim-python-pep8-indent'
 Plug 'pangloss/vim-javascript'
 Plug 'rust-lang/rust.vim'
+Plug 'udalov/kotlin-vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
 Plug 'leafOfTree/vim-vue-plugin'
@@ -293,31 +293,40 @@ let g:surround_100 = "$$ \r $$" " d
 " nm dsm ds$
 " nm csm cs$
 
-if exists('*textobj#user#plugin')
-  call textobj#user#plugin('latex', {
-  \   'environment': {
-  \     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
-  \     'select-a': 'ae',
-  \     'select-i': 'ie',
-  \   },
-  \  'math-a': {
-  \     'pattern': '\$\_[^$]*\$',
-  \     'select': ['a$', 'am'],
-  \   },
-  \  'math-i': {
-  \     'pattern': '\v\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$',
-  \     'select': ['i$', 'im'],
-  \   },
-  \  'displaymath-a': {
-  \     'pattern': '\$\$\_[^$]*\$\$',
-  \     'select': 'ad',
-  \   },
-  \  'displaymath-i': {
-  \     'pattern': '\v\$\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$\$',
-  \     'select': 'id',
-  \   },
-  \ })
-end
+" if exists('*textobj#user#plugin')
+"   This does not work
+" end
+call textobj#user#plugin('latex', {
+\   'environment': {
+\     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
+\     'select-a': 'ae',
+\     'select-i': 'ie',
+\   },
+\  'math-a': {
+\     'pattern': '\$\_[^$]*\$',
+\     'select': ['a$', 'am'],
+\   },
+\  'math-i': {
+\     'pattern': '\v\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$',
+\     'select': ['i$', 'im'],
+\   },
+\  'displaymath-a': {
+\     'pattern': '\$\$\_[^$]*\$\$',
+\     'select': 'ad',
+\   },
+\  'displaymath-i': {
+\     'pattern': '\v\$\$[ \t\r\n]*\zs[^$ \t\r\n]+([ \t\r\n]+[^$ \t\r\n]+)*\ze[ \t\r\n]*\$\$',
+\     'select': 'id',
+\   },
+\ })
+
+call textobj#user#plugin('ruby', {
+\   'block': {
+\     'pattern': ['\<do\>', '\<end\>'],
+\     'select-a': 'af',
+\     'select-i': 'if',
+\   },
+\ })
 " }}}
 
 " Others {{{
