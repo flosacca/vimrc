@@ -48,7 +48,11 @@ nn <expr> : FakeCmdLine()
 
 nn U <C-r>
 
-no <silent> q :call Quit()<CR>
+aug local_map
+  au!
+  au BufEnter,VimEnter * no <buffer> <silent> q :call Quit()<CR>
+aug END
+
 no <silent> Q :call QuitAll()<CR>
 no gy q
 
@@ -434,6 +438,8 @@ func! AddFileType()
   let ext = expand('%:e')
   if ext ==? 'pgf'
     se ft=tex
+  elseif ext ==? 'ipynb'
+    se ft=json
   elseif ext ==? 's'
     " se ft=asm
   elseif ext =~? '\v^(asm|inc)$'
@@ -470,12 +476,13 @@ func! FileTypeConfig()
   call LSMap('nn', '<F8>', 'Run()', 1)
   call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
 
-  if &ft =~ '\v^((make|c|cpp|java|masm)$|antlr)'
+  if &ft =~ '\v^((make|c|cpp|java|kotlin|masm|tex)$|antlr)'
     setl ts=4
   end
 
   if &ft =~ '\v^(make)$'
     setl noet
+    call LSMap('nn', '<F7>', 'Make()', 1)
   end
 
   if &ft == '\v^(vue)$'
@@ -695,10 +702,6 @@ com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 
 " Compile & Run -------------- {{{
 func! Make(...)
-  if expand('%:e') =~ '\v^(|h)$'
-    !cpp-syntax "%"
-    return 1
-  end
   let dir = '.'
   while 1
     if filereadable(dir . '/Makefile')
