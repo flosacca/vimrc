@@ -58,6 +58,7 @@ no gy q
 
 nn <silent> <Space>w :up<CR>
 
+vn x "_d
 vn <silent> p :<C-u>call VPut()<CR>
 vn P "0p
 vn gp p
@@ -129,6 +130,7 @@ ino <C-\><BS> <Up><End><CR>
 ino <C-\>e <CR><Up><End><CR>
 
 cno ` <C-r>
+cno `` `
 
 vn <LeftMouse> "+ygV
 nn <silent> <Space>y :call ClipAll()<CR>
@@ -202,6 +204,7 @@ Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
 Plug 'terryma/vim-multiple-cursors'
+" Plug 'mg979/vim-visual-multi'
 Plug 'tpope/vim-abolish'
 Plug 'danro/rename.vim'
 Plug 'mattn/emmet-vim'
@@ -327,8 +330,8 @@ call textobj#user#plugin('latex', {
 call textobj#user#plugin('ruby', {
 \   'block': {
 \     'pattern': ['\<do\>', '\<end\>'],
-\     'select-a': 'af',
-\     'select-i': 'if',
+\     'select-a': 'ad',
+\     'select-i': 'id',
 \   },
 \ })
 " }}}
