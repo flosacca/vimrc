@@ -203,8 +203,8 @@ Plug 'gko/vim-coloresque'
 Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
-Plug 'terryma/vim-multiple-cursors'
-" Plug 'mg979/vim-visual-multi'
+" Plug 'terryma/vim-multiple-cursors'
+Plug 'mg979/vim-visual-multi'
 Plug 'tpope/vim-abolish'
 Plug 'danro/rename.vim'
 Plug 'mattn/emmet-vim'
@@ -345,7 +345,15 @@ let g:mkdp_preview_options = { 'disable_sync_scroll': 1 }
 
 let g:markdown_enable_spell_checking = 0
 
-let g:multi_cursor_select_all_word_key = 'g<C-n>'
+" let g:multi_cursor_select_all_word_key = 'g<C-n>'
+
+" TODO: better mappings
+let g:VM_maps = {
+\   'Skip Region': '<C-x>',
+\   'Remove Region': '<C-d>',
+\   'Find Subword Under': '',
+\   'Visual Cursors': '<C-n>',
+\ }
 " }}}
 
 " ---------------------------- }}}
