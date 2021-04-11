@@ -63,7 +63,8 @@ vn <silent> p :<C-u>call VPut()<CR>
 vn P "0p
 vn gp p
 
-no gg gg0
+nn gg gg0
+nn G G0
 " }}}
 
 " Moving {{{
@@ -159,14 +160,11 @@ let s:plug_path = '~/.vim/autoload/plug.vim'
 func! GetPlug()
   let url = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
   sil exe printf('!curl --create-dirs -sLo %s %s', s:plug_path, url)
+  redraw!
   return v:shell_error == 0
 endf
 
-if empty(glob(s:plug_path))
-  if GetPlug()
-    au VimEnter * PlugInstall --sync | so $MYVIMRC
-  end
-end
+com! GetPlug call GetPlug()
 
 let g:has_plug = !empty(glob(s:plug_path))
 
@@ -193,7 +191,7 @@ Plug 'rust-lang/rust.vim'
 Plug 'udalov/kotlin-vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
-Plug 'leafOfTree/vim-vue-plugin'
+Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
 Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
 Plug 'gko/vim-coloresque'
@@ -303,7 +301,7 @@ let g:surround_100 = "$$ \r $$" " d
 " if exists('*textobj#user#plugin')
 "   This does not work
 " end
-call textobj#user#plugin('latex', {
+sil! call textobj#user#plugin('latex', {
 \   'environment': {
 \     'pattern': ['\\begin{[^}]\+}\(\[[^]]*\]\)\?\({[^}]*}\)*\n\?', '\\end{[^}]\+}'],
 \     'select-a': 'ae',
@@ -327,7 +325,7 @@ call textobj#user#plugin('latex', {
 \   },
 \ })
 
-call textobj#user#plugin('ruby', {
+sil! call textobj#user#plugin('ruby', {
 \   'block': {
 \     'pattern': ['\<do\>', '\<end\>'],
 \     'select-a': 'ad',
@@ -496,7 +494,7 @@ func! FileTypeConfig()
     call LSMap('nn', '<F7>', 'Make()', 1)
   end
 
-  if &ft == '\v^(vue)$'
+  if &ft =~ '\v^(vue)$'
     setl isk+=-
   end
 
@@ -774,7 +772,7 @@ func! Run()
   elseif &ft == 'javascript'
     !node "%"
   elseif &ft == 'autohotkey'
-    call WinOpen('"%"', 0, 1)
+    call WinOpen('"%"', 0)
   elseif &ft == 'tex'
     call WinOpen('"%<.pdf"')
   elseif &ft == 'markdown'
