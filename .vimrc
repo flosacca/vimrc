@@ -335,7 +335,8 @@ sil! call textobj#user#plugin('ruby', {
 " }}}
 
 " Others {{{
-map gn <Plug>TComment_gcc
+nm gn <Plug>TComment_gcc
+vm gn <Plug>TComment_gc
 
 let g:mkdp_auto_close = 0
 
@@ -472,6 +473,8 @@ let g:python_highlight_all = 1
 let g:python_highlight_space_errors = 0
 
 let g:ruby_indent_assignment_style = 'variable'
+
+let g:go_highlight_trailing_whitespace_error = 0
 
 let g:vim_vue_plugin_use_scss = 1
 let g:vim_vue_plugin_highlight_vue_attr = 1
@@ -728,7 +731,7 @@ func! Make(...)
   endw
 endf
 
-let g:cxxflags = ['-std=c++14']
+let g:cxxflags = ['-std=c++17']
 let g:cflags = ['-std=c99']
 let g:ldflags = []
 if s:win
