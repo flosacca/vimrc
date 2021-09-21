@@ -23,6 +23,8 @@ se ttm=0
 se kp=
 se nosol
 
+se mmp=2000000
+
 let s:win = has('win32') || has('win64')
 let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
@@ -135,6 +137,8 @@ cno `` `
 
 vn <LeftMouse> "+ygV
 nn <silent> <Space>y :call ClipAll()<CR>
+
+nn <Space>; A;<Esc>
 
 " if s:win_gui
 "   nn <silent> <F8> :call Run()<CR><CR>
@@ -328,8 +332,8 @@ sil! call textobj#user#plugin('latex', {
 sil! call textobj#user#plugin('ruby', {
 \   'block': {
 \     'pattern': ['\<do\>', '\<end\>'],
-\     'select-a': 'ad',
-\     'select-i': 'id',
+\     'select-a': 'af',
+\     'select-i': 'if',
 \   },
 \ })
 " }}}
@@ -735,7 +739,7 @@ let g:cxxflags = ['-std=c++17']
 let g:cflags = ['-std=c99']
 let g:ldflags = []
 if s:win
-   call add(g:ldflags, '-Wl,--stack=268435456')
+  call add(g:ldflags, '-Wl,--stack=268435456')
 end
 
 func! Compile(...)
@@ -761,19 +765,21 @@ func! Compile(...)
   end
 endf
 
+let g:run_args = ''
+
 func! Run()
   if &ft =~ '\v^(c|cpp|masm)$'
     if !Make('run')
       !"./%<"
     end
   elseif &ft == 'java'
-    !java "%<"
+    exe '!java "%<" ' . g:run_args
   elseif &ft == 'python'
-    !python3 "%"
+    exe '!python3 "%" ' . g:run_args
   elseif &ft == 'ruby'
-    !ruby "%"
+    exe '!ruby "%" ' . g:run_args
   elseif &ft == 'javascript'
-    !node "%"
+    exe '!node "%" ' . g:run_args
   elseif &ft == 'autohotkey'
     call WinOpen('"%"', 0)
   elseif &ft == 'tex'
