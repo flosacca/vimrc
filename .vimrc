@@ -60,6 +60,8 @@ no gy q
 
 nn <silent> <Space>w :up<CR>
 
+no <Space>v V
+
 vn x "_d
 vn <silent> p :<C-u>call VPut()<CR>
 vn P "0p
@@ -77,7 +79,7 @@ no <Space>j <C-d>
 no <Space>k <C-u>
 no <Space>u <C-f>
 no <Space>i <C-b>
-no <silent> <Space>v :<C-u>call ViewingMode()<CR>
+no <silent> <Space>f :<C-u>call ViewingMode()<CR>
 
 no <C-h> <C-w>h
 no <C-j> <C-w>j
@@ -127,6 +129,7 @@ nn <C-a> ga
 " nn gt :tabe<Space>
 nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
+nn <silent> <Space>. :so ~/.vimrc<CR>
 
 ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
@@ -530,6 +533,10 @@ func! FileTypeConfig()
 
   if &ft =~ '^s[ca]ss$'
     call LSMap('nn', '<F7>', 'Compile()', 1)
+  end
+
+  if &ft == 'sh'
+    com! -range Upper <line1>,<line2>s/\v\$\w+>|<\w+\=/\U&/g
   end
 
   if &ft == 'tex'
