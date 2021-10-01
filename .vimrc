@@ -56,7 +56,7 @@ aug local_map
 aug END
 
 no <silent> Q :call QuitAll()<CR>
-no gy q
+no <Space>q q
 
 nn <silent> <Space>w :up<CR>
 
@@ -140,6 +140,7 @@ cno `` `
 
 vn <LeftMouse> "+ygV
 nn <silent> <Space>y :call ClipAll()<CR>
+vn <silent> gy :call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
 
@@ -922,6 +923,13 @@ func! ClipAll()
     let &fixeol = fixeol
     let &eol = eol
   endt
+endf
+
+func! ClipVisual() range
+  let reg = @"
+  normal! gvy
+  call system('clip.exe', @")
+  let @" = reg
 endf
 
 func! VSub(...) range
