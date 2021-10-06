@@ -642,6 +642,18 @@ func! RStrip(str, ...)
   return substitute(a:str, '\v%^(.{-})' . pat . '%$', '\1', '')
 endf
 
+func! GetText(lp, rp)
+  let pos = getpos('.')
+  let reg = @"
+  call setpos("'<", a:lp)
+  call setpos("'>", a:rp)
+  normal! gvy
+  let text = @"
+  let @" = reg
+  call setpos('.', pos)
+  return text
+endf
+
 func! TryExec(cmd, ...)
   let s:exception = ''
   let pat = get(a:, 1, '.*')
@@ -860,54 +872,68 @@ func! QuitAll()
   end
 endf
 
-func! ExpandTextObj(...)
-  let mid_end_pos = call('CollapseTextObj', a:000)
-  if !empty(mid_end_pos)
-    let left_end_pos = getpos('.')
-    if mid_end_pos == left_end_pos
-      exe "normal! a\n\n\ek"
-    else
-      call setpos('.', mid_end_pos)
-      exe "normal! a\n\e"
-      call setpos('.', left_end_pos)
-      exe "normal! a\n\el"
-    end
+func! GetTextObj(key)
+  let reg = @"
+  let pos = getpos('.')
+  exe "normal ya" . a:key
+  let outer_text = @"
+  let outer_lp = getpos("'[")
+  let outer_rp = getpos("']")
+  call setpos('.', pos)
+  exe "normal yi" . a:key
+  let inner_text = @"
+  if len(outer_text) - len(inner_text) < 2
+    return
   end
+  let inner_lp = getpos("'[")
+  let inner_rp = getpos("']")
+  let left_text = GetText(outer_lp, inner_lp)[:-2]
+  if empty(inner_text)
+    let right_text = GetText(inner_lp, outer_rp)
+  else
+    let right_text = GetText(inner_rp, outer_rp)[1:]
+  end
+  call setpos('.', pos)
+  let @" = reg
+  return [[outer_lp, outer_rp], [left_text, inner_text, right_text]]
 endf
 
 func! CollapseTextObj(...)
   let key = a:0 ? a:1 : nr2char(getchar())
-  let regs = [@r, @m, @l]
-  let @r = ''
-  let @m = ''
-  let initial_pos = getpos('.')
-  exe 'normal "rya' . key
-  let left_start_pos = getpos("'[")
-  call setpos('.', initial_pos)
-  exe 'normal "myi' . key
-  call setpos('.', initial_pos)
-  if len(@r) - len(@m) >= 2
-    call setpos('.', left_start_pos)
-    normal! v`[
-    exe 'normal! ' . (col('.') == 1 ? 'k$' : 'h')
-    normal! "ly
-    let @l = RStrip(@l)
-    call setpos('.', initial_pos)
-    normal! v
-    exe 'normal a' . key
-    exe "normal! \"rc\<C-r>\<C-o>l\e"
-    let left_end_pos = getpos('.')
-    let @m = Strip(@m)
-    normal! "mp`]
-    let mid_end_pos = getpos('.')
-    let @r = LStrip(LStrip(@r[len(@l):])[len(@m):])
-    normal! "rp
-    call setpos('.', left_end_pos)
-  else
-    let mid_end_pos = 0
+  let obj = GetTextObj(key)
+  if empty(obj)
+    return
   end
-  let [@r, @m, @l] = regs
-  return mid_end_pos
+  let reg = @"
+  let @" = RStrip(obj[1][0])
+  call setpos("'<", obj[0][0])
+  call setpos("'>", obj[0][1])
+  normal! gvp`]
+  let left_rp = getpos('.')
+  let @" = Strip(obj[1][1])
+  normal! p`]
+  let inner_rp = getpos('.')
+  let @" = LStrip(obj[1][2])
+  normal! p
+  call setpos('.', left_rp)
+  let @" = reg
+  return inner_rp
+endf
+
+func! ExpandTextObj(...)
+  let inner_rp = call('CollapseTextObj', a:000)
+  if empty(inner_rp)
+    return
+  end
+  let left_rp = getpos('.')
+  if inner_rp == left_rp
+    exe "normal! a\n\n\ek"
+  else
+    call setpos('.', inner_rp)
+    exe "normal! a\n\e"
+    call setpos('.', left_rp)
+    exe "normal! a\n\el"
+  end
 endf
 
 func! ClipAll()
