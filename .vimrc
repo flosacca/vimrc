@@ -92,7 +92,7 @@ nn <silent> & :&&<CR>
 
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
-nn g/ /^\s*
+nn g/ /^\s*\zs
 
 " vn <silent> s :call VSub('g')<CR>
 vn s :s//g<Left><Left>
@@ -117,6 +117,9 @@ call TextObjMap('v', '}')
 
 nn <silent> co :sil call ExpandTextObj()<CR>
 nn <silent> cd :sil call CollapseTextObj()<CR>
+
+nn <silent> csfv :sil call ChangeSurround('f', ['{', '}'])<CR>
+nn <silent> csvf :sil call ChangeSurround('v', ['do', 'end'])<CR>
 " }}}
 
 " Utils {{{
@@ -934,6 +937,18 @@ func! ExpandTextObj(...)
     call setpos('.', left_rp)
     exe "normal! a\n\el"
   end
+endf
+
+func! ChangeSurround(key, sub)
+  let obj = GetTextObj(a:key)
+  let reg = @"
+  let @" = a:sub[0] . LStrip(obj[1][0], '\S*')
+        \ . obj[1][1]
+        \ . RStrip(obj[1][2], '\S*') . a:sub[1]
+  call setpos("'<", obj[0][0])
+  call setpos("'>", obj[0][1])
+  normal! gvp
+  let @" = reg
 endf
 
 func! ClipAll()
