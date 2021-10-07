@@ -28,6 +28,7 @@ se mmp=2000000
 let s:win = has('win32') || has('win64')
 let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
+let s:vim8 = v:version >= 800
 
 aug detect_stdin
   au!
@@ -46,7 +47,7 @@ nn <Space> <Nop>
 " }}}
 
 " Basic keys {{{
-nn <expr> : FakeCmdLine()
+nn <expr> : TryFakeCmdLine()
 
 nn U <C-r>
 
@@ -213,7 +214,9 @@ Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
 " Plug 'terryma/vim-multiple-cursors'
-Plug 'mg979/vim-visual-multi'
+if s:vim8
+  Plug 'mg979/vim-visual-multi'
+end
 Plug 'tpope/vim-abolish'
 Plug 'danro/rename.vim'
 Plug 'mattn/emmet-vim'
@@ -386,16 +389,20 @@ aug END
 
 if exists('$NOBLINK')
   let &t_ti .= "\e[2 q"
-  let &t_SI .= "\e[6 q"
-  let &t_SR .= "\e[4 q"
-  let &t_EI .= "\e[2 q"
   let &t_te .= "\e[4 q"
+  let &t_SI .= "\e[6 q"
+  let &t_EI .= "\e[2 q"
+  if s:vim8
+    let &t_SR .= "\e[4 q"
+  end
 else
   let &t_ti .= "\e[1 q"
-  let &t_SI .= "\e[5 q"
-  let &t_SR .= "\e[3 q"
-  let &t_EI .= "\e[1 q"
   let &t_te .= "\e[3 q"
+  let &t_SI .= "\e[5 q"
+  let &t_EI .= "\e[1 q"
+  if s:vim8
+    let &t_SR .= "\e[3 q"
+  end
 end
 
 if s:gui
@@ -416,11 +423,11 @@ else
     let &t_8b = "\e[48;2;%lu;%lu;%lum"
     se tgc
   else
-    let g:no_gui_colors = 1
+    " let g:no_gui_colors = 1
   end
 end
 
-if empty(getcompletion('gruvbox', 'color'))
+if s:vim8 && empty(getcompletion('gruvbox', 'color'))
   let g:no_gui_colors = 1
 end
 
@@ -681,16 +688,18 @@ func! Input(prompt)
 endf
 
 func! LSMap(map, key, cmd, expect_pause, ...)
-  let cmd = a:cmd
-  if type(cmd) == 3
+  if type(a:cmd) == 3
     if a:expect_pause && !s:win_gui
-      call map(cmd, '"sil " . v:val')
+      call map(a:cmd, '"sil " . v:val')
     end
-    let cmd = join(cmd, '<Bar>')
-  elseif get(a:, 1, 1)
-    let cmd = 'call ' . cmd
-    if a:expect_pause && !s:win_gui
-      let cmd = 'sil ' . cmd
+    let cmd = join(a:cmd, '<Bar>')
+  elseif type(a:cmd) == 1
+    let cmd = a:cmd
+    if get(a:, 1, 1)
+      let cmd = 'call ' . cmd
+      if a:expect_pause && !s:win_gui
+        let cmd = 'sil ' . cmd
+      end
     end
   end
   " TODO
@@ -838,7 +847,7 @@ func! FakeCmdLine()
       echo ':' . s
     end
     let c = getchar()
-    if type(c) == v:t_number
+    if type(c) == 0
       let c = nr2char(c)
     end
     if c == "\<BS>"
@@ -857,6 +866,15 @@ func! FakeCmdLine()
       return ':' . s
     end
   endw
+endf
+
+func! TryFakeCmdLine()
+  try
+    return FakeCmdLine()
+  catch
+    nun :
+    return ':'
+  endt
 endf
 
 func! Quit()
