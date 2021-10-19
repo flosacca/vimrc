@@ -159,8 +159,6 @@ nn <Space>; A;<Esc>
 no <M-x> :
 cno <M-j> <Down>
 cno <M-k> <Up>
-
-" se kmp=dvorak
 " }}}
 
 " ---------------------------- }}}
