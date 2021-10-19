@@ -976,7 +976,7 @@ func! ClipAll()
     let eol = &eol
     se nofixeol
     se noeol
-    sil w !clip.exe
+    sil w !clip.exe --copy
     let &fixeol = fixeol
     let &eol = eol
   endt
@@ -985,7 +985,11 @@ endf
 func! ClipVisual() range
   let reg = @"
   normal! gvy
-  call system('clip.exe', @")
+  try
+    let @+ = @"
+  catch
+    call system('clip.exe --copy', @")
+  endt
   let @" = reg
 endf
 
