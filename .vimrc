@@ -207,6 +207,7 @@ Plug 'vim-language-dept/css-syntax.vim'
 Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
 Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
+Plug 'chr4/nginx.vim'
 Plug 'gko/vim-coloresque'
 " --------------------------------
 
@@ -502,13 +503,26 @@ let g:vim_vue_plugin_highlight_vue_keyword = 1
 
 hi link jsParensError NONE
 
+let s:indent4 = [
+\   'make',
+\   'c',
+\   'cpp',
+\   'java',
+\   'kotlin',
+\   'python',
+\   'masm',
+\   'tex',
+\   'nginx',
+\   'antlr.*',
+\ ]
+
 func! FileTypeConfig()
   setl fo-=ro
 
   call LSMap('nn', '<F8>', 'Run()', 1)
   call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
 
-  if &ft =~ '\v^((make|c|cpp|java|kotlin|masm|tex)$|antlr)'
+  if &ft =~ printf('\v^(%s)$', join(s:indent4, '|'))
     setl ts=4
   end
 
