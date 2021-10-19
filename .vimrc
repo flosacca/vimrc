@@ -139,6 +139,9 @@ ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
 ino <C-\>e <CR><Up><End><CR>
 
+" If <Esc> is used instead, the cursor will flash noticeably in gVim
+ino <silent> <C-k> <C-\><C-o>:call MakeUpper()<CR>
+
 cno ` <C-r>
 cno `` `
 
@@ -684,6 +687,15 @@ func! Input(prompt)
   let value = input(a:prompt)
   call inputrestore()
   return value
+endf
+
+func! MakeUpper()
+  let pos = getpos('.')
+  let pos[2] -= 1
+  call setpos('.', pos)
+  normal! gUiw
+  let pos[2] += 1
+  call setpos('.', pos)
 endf
 
 func! LSMap(map, key, cmd, expect_pause, ...)
