@@ -403,45 +403,46 @@ else
   end
 end
 
+func! HasTC()
+  if has('termguicolors')
+    if !empty($TMUX)
+      return system('tmux info') =~# '\v<Tc>[^\n]*<true>'
+    end
+    return 1
+  end
+endf
+
+let s:colors = 1
 if s:gui
   se go=
   se gfn=ubuntu_mono:h14
-
   aug maximize_gui
     au!
     au GUIEnter * sim ~x
   aug END
-
-elseif $TERM !~ '256'
-  let g:no_gui_colors = 1
-
-else
-  if has('termguicolors')
+elseif $TERM =~# '256color'
+  if HasTC()
     let &t_8f = "\e[38;2;%lu;%lu;%lum"
     let &t_8b = "\e[48;2;%lu;%lu;%lum"
     se tgc
-  else
-    " let g:no_gui_colors = 1
   end
+else
+  unl s:colors
 end
 
-if s:vim8 && empty(getcompletion('gruvbox', 'color'))
-  let g:no_gui_colors = 1
-end
-
-if !get(g:, 'no_gui_colors', 0)
+try
+  unl s:colors
   se bg=dark
   let g:gruvbox_italic = 0
   colo gruvbox
   hi! link Operator GruvboxRed
   let g:lightline = { 'colorscheme': 'gruvbox' }
-
-else
+catch
   se t_Co=256
   se nocuc
   se nocul
   colo desert
-end
+endt
 
 " ---------------------------- }}}
 
