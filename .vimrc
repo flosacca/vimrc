@@ -291,9 +291,9 @@ aug END
 " }}}
 
 " Emmet {{{
-im <C-u> <Plug>(emmet-expand-abbr)
-nm <C-u> <Plug>(emmet-expand-abbr)
-vm <C-u> <Plug>(emmet-expand-abbr)
+" im <C-u> <Plug>(emmet-expand-abbr)
+" nm <C-u> <Plug>(emmet-expand-abbr)
+" vm <C-u> <Plug>(emmet-expand-abbr)
 
 nn <C-t> <C-y>
 ino <C-t> <C-y>
