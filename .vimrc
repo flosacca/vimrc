@@ -440,7 +440,10 @@ try
   let g:gruvbox_italic = 0
   colo gruvbox
   hi! link Operator GruvboxRed
-  let g:lightline = { 'colorscheme': 'gruvbox' }
+  let g:lightline = {
+\   'colorscheme': 'gruvbox',
+\   'mode_map': { 'c': 'NORMAL' }
+\ }
 catch
   se t_Co=256
   se nocuc
@@ -472,7 +475,7 @@ func! AddFileType()
   elseif ext ==? 'ipynb'
     se ft=json
   elseif ext ==? 's'
-    " se ft=asm
+    se ft=ia64
   elseif ext =~? '\v^(asm|inc)$'
     se ft=masm
   end
@@ -501,6 +504,8 @@ let g:vim_vue_plugin_use_scss = 1
 let g:vim_vue_plugin_highlight_vue_attr = 1
 let g:vim_vue_plugin_highlight_vue_keyword = 1
 
+hi link cErrInParen NONE
+
 hi link jsParensError NONE
 
 let s:indent4 = [
@@ -528,7 +533,7 @@ func! FileTypeConfig()
 
   if &ft =~ '\v^(make)$'
     setl noet
-    call LSMap('nn', '<F7>', 'Make()', 1)
+    call LSMap('nn', '<F7>', ['up', 'call Make()'], 1)
   end
 
   if &ft =~ '\v^(vue)$'
@@ -794,8 +799,11 @@ func! Make(...)
   endw
 endf
 
-let g:cxxflags = ['-std=c++17']
-let g:cflags = ['-std=c99']
+let g:cpp_std = 17
+let g:c_std = 99
+
+let g:cxxflags = []
+let g:cflags = []
 let g:ldflags = []
 if s:win
   call add(g:ldflags, '-Wl,--stack=268435456')
@@ -806,12 +814,22 @@ func! Compile(...)
   if &ft =~ '\v^(c|cpp)$'
     if !Make()
       if &ft == 'cpp'
-        let cmd = ["g++", g:cxxflags]
+        let bin = 'g++'
+        if !s:win && g:cpp_std == 20
+          let bin = 'g++-11'
+        end
+        let std = 'c++' . g:cpp_std
+        let flags = copy(g:cxxflags)
       else
-        let cmd = ['gcc', g:cflags]
+        let bin = 'gcc'
+        let std = 'c' . g:c_std
+        let flags = copy(g:cflags)
       end
-      let flags = cmd[1] + get(a:, 1, [])
-      exe '!' . join([cmd[0]] + flags + ['-o "%<" "%"'] + g:ldflags)
+      let flags += get(a:, 1, [])
+      if join(flags) !~# '\(\s\|^\)-std='
+        let flags += ['-std=' . std]
+      end
+      exe '!' . join([bin] + flags + ['-o "%<" "%"'] + g:ldflags)
     end
   elseif &ft == 'java'
     !javac "%"
@@ -829,7 +847,7 @@ let g:run_args = ''
 func! Run()
   if &ft =~ '\v^(c|cpp|masm)$'
     if !Make('run')
-      !"./%<"
+      exe '!"./%<" ' . g:run_args
     end
   elseif &ft == 'java'
     exe '!java "%<" ' . g:run_args
