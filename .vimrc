@@ -712,10 +712,14 @@ func! MakeUpper()
   call setpos('.', pos)
 endf
 
+func! Silent(cmd)
+  return printf("exe 'norm! :%s<C-v><CR>'", a:cmd)
+endf
+
 func! LSMap(map, key, cmd, expect_pause, ...)
   if type(a:cmd) == 3
     if a:expect_pause && !s:win_gui
-      call map(a:cmd, '"sil " . v:val')
+      call map(a:cmd, 'Silent(v:val)')
     end
     let cmd = join(a:cmd, '<Bar>')
   elseif type(a:cmd) == 1
@@ -723,17 +727,15 @@ func! LSMap(map, key, cmd, expect_pause, ...)
     if get(a:, 1, 1)
       let cmd = 'call ' . cmd
       if a:expect_pause && !s:win_gui
-        let cmd = 'sil ' . cmd
+        let cmd = Silent(cmd)
       end
     end
   end
-  " TODO
   if a:expect_pause && !s:win_gui
     let pause_cmd = [
-\      'sil exe "!echo && echo Press any key to continue"',
-\      'sil exe "!read -sN1"',
-\      'redraw!'
-\    ]
+\     'sil exe "!read -sN1"',
+\     'redraw!'
+\   ]
     let cmd = join([':<C-u>' . cmd] + pause_cmd, '<Bar>') . '<CR>'
   else
     let cmd = ':<C-u>' . cmd . '<CR>'
