@@ -200,6 +200,7 @@ Plug 'vim-ruby/vim-ruby'
 Plug 'vim-python/python-syntax'
 Plug 'Vimjas/vim-python-pep8-indent'
 Plug 'pangloss/vim-javascript'
+Plug 'leafgarland/typescript-vim'
 Plug 'rust-lang/rust.vim'
 Plug 'udalov/kotlin-vim'
 Plug 'gabrielelana/vim-markdown'
@@ -207,7 +208,7 @@ Plug 'vim-language-dept/css-syntax.vim'
 Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
 Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
-Plug 'chr4/nginx.vim'
+Plug 'flosacca/nginx.vim'
 Plug 'gko/vim-coloresque'
 " --------------------------------
 
@@ -515,6 +516,7 @@ let s:indent4 = [
 \   'java',
 \   'kotlin',
 \   'python',
+\   'cuda',
 \   'masm',
 \   'tex',
 \   'nginx',
@@ -558,7 +560,7 @@ func! FileTypeConfig()
     call LSMap('nn', '<F9>', ['call Compile(["-g3"])', 'call Run()'], 1)
   end
 
-  if &ft =~ '\v^(java|masm|tex)$'
+  if &ft =~ '\v^(java|cuda|masm|tex)$'
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
   end
@@ -781,21 +783,24 @@ com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 " }}}
 
 " Compile & Run -------------- {{{
+let g:makefile_level = -1
+
 func! Make(...)
   let dir = '.'
+  let level = 0
   while 1
     if filereadable(dir . '/Makefile')
       exe printf('!cd %s && %s %s', dir, get(a:, 2, 'make'), get(a:, 1, ''))
       return 1
     end
-
-    " prevent further search
-    return 0
-
+    if g:makefile_level >= 0 && level >= g:makefile_level
+      return 0
+    end
     if fnamemodify(dir, ':p') == fnamemodify(dir . '/..', ':p')
       return 0
     end
     let dir .= '/..'
+    let level += 1
   endw
 endf
 
@@ -804,9 +809,9 @@ let g:c_std = 99
 
 let g:cxxflags = []
 let g:cflags = []
-let g:ldflags = []
+let g:ldlibs = []
 if s:win
-  call add(g:ldflags, '-Wl,--stack=268435456')
+  call add(g:ldlibs, '-Wl,--stack=268435456')
 end
 
 func! Compile(...)
@@ -829,10 +834,12 @@ func! Compile(...)
       if join(flags) !~# '\(\s\|^\)-std='
         let flags += ['-std=' . std]
       end
-      exe '!' . join([bin] + flags + ['-o "%<" "%"'] + g:ldflags)
+      exe '!' . join([bin] + flags + ['-o "%<" "%"'] + g:ldlibs)
     end
   elseif &ft == 'java'
     !javac "%"
+  elseif &ft == 'cuda'
+    !nvcc -o "%<" -Xcompiler /utf-8 "%"
   elseif &ft == 'masm'
     call Make('', 'mingw32-make')
   elseif &ft == 'tex'
@@ -845,7 +852,7 @@ endf
 let g:run_args = ''
 
 func! Run()
-  if &ft =~ '\v^(c|cpp|masm)$'
+  if &ft =~ '\v^(c|cpp|cuda|masm)$'
     if !Make('run')
       exe '!"./%<" ' . g:run_args
     end
@@ -864,10 +871,12 @@ func! Run()
   elseif &ft == 'markdown'
     MarkdownPreview
   else
-    if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
-      !"./%"
-    else
-      call WinOpen('"%"')
+    if !Make('run')
+      if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
+        !"./%"
+      else
+        call WinOpen('"%"')
+      end
     end
   end
 endf
