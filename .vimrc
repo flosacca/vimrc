@@ -378,8 +378,6 @@ let g:VM_maps = {
 
 se nu
 se ru
-se cuc
-se cul
 se nowrap
 se fdm=marker
 se ls=2
