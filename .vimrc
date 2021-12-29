@@ -168,14 +168,14 @@ func! GetPlug()
   return v:shell_error == 0
 endf
 
-com! GetPlug call GetPlug()
+com! -bar GetPlug call GetPlug()
 
 let g:has_plug = !empty(glob(s:plug_path))
 
 if g:has_plug
   call plug#begin('~/.vim/plugged')
 else
-  com! -nargs=* Plug
+  com! -bar -nargs=* Plug
 end
 
 " Basic --------------------------
@@ -445,13 +445,14 @@ endt
 
 " Format --------------------- {{{
 
-com! -nargs=1 Tab setl ts=<args> | setl sw=0 | setl sts=-1
-
 se ts=2
 se sw=0
 se sts=-1
 se et
 se si
+se nojs
+
+com! -bar -nargs=1 Tab setl ts=<args> | setl sw=0 | setl sts=-1
 
 aug add_file_type
   au!
@@ -536,8 +537,8 @@ func! FileTypeConfig()
   end
 
   if &ft =~ '\v^(python|ruby)$'
-    com! NextDef call search('\v^\s*(def|class)>')
-    com! PrevDef call search('\v^\s*(def|class)>', 'b')
+    com! -bar NextDef call search('\v^\s*(def|class)>')
+    com! -bar PrevDef call search('\v^\s*(def|class)>', 'b')
     call LSMap('no', ']f', 'NextDef', 0, 0)
     call LSMap('no', '[f', 'PrevDef', 0, 0)
   end
@@ -559,7 +560,7 @@ func! FileTypeConfig()
   end
 
   if &ft == 'sh'
-    com! -range Upper <line1>,<line2>s/\v\$\w+>|<\w+\=/\U&/g
+    com! -bar -range Upper <line1>,<line2>s/\v\$\w+>|<\w+\=/\U&/g
   end
 
   if &ft == 'tex'
@@ -643,6 +644,12 @@ aug file_type_config
   au BufEnter,FileType * call FileTypeConfig()
   au BufRead,BufNewFile * call PureTextConfig()
 aug END
+
+com! -bar -range Join <line1>,<line2>call Unwrap()
+com! -bar -range J <line1>,<line2>call Unwrap()
+
+com! -bar -range Clip <line1>,<line2>call Clip()
+com! -bar -range Y <line1>,<line2>call Clip()
 
 " ---------------------------- }}}
 
@@ -753,7 +760,7 @@ func! WinOpen(name, ...)
   end
 endf
 
-com! -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
+com! -bar -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
 " }}}
 
 " Compile & Run -------------- {{{
@@ -997,6 +1004,18 @@ func! ChangeSurround(key, sub)
   let @" = reg
 endf
 
+func! Unwrap() range
+  let range = a:firstline . ',' . a:lastline
+  let reg = @"
+  sil exe range . 'y'
+  let str = @"
+  let @" = reg
+  let str = substitute(str, '-\s*\n\s*', '', 'g')
+  let str = substitute(str, '\s*\n\s*', ' ', 'g')[:-2]
+  call append(a:lastline, str)
+  sil exe range . 'd _'
+endf
+
 func! ClipAll()
   try
     %y +
@@ -1015,6 +1034,18 @@ endf
 func! ClipVisual() range
   let reg = @"
   normal! gvy
+  try
+    let @+ = @"
+  catch
+    call system('clip.exe --copy', @")
+  endt
+  let @" = reg
+endf
+
+func! Clip() range
+  let reg = @"
+  exe a:firstline . ',' . a:lastline . 'y'
+  let @" = @"[:-2]
   try
     let @+ = @"
   catch
