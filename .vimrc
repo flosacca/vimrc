@@ -130,7 +130,6 @@ nn gx <C-x>
 vn gx g<C-x>
 nn <C-a> ga
 
-" nn gt :tabe<Space>
 nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>p :let &paste=!&paste<CR>
 nn <silent> <Space>. :so ~/.vimrc<CR>
@@ -150,14 +149,6 @@ nn <silent> <Space>y :call ClipAll()<CR>
 vn <silent> gy :call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
-
-" if s:win_gui
-"   nn <silent> <F8> :call Run()<CR><CR>
-"   nn <silent> <F9> :up<CR>:call Run()<CR><CR>
-" else
-"   nn <silent> <F8> :call Run()<CR>
-"   nn <silent> <F9> :up<CR>:call Run()<CR>
-" end
 
 no <M-x> :
 cno <M-j> <Down>
@@ -284,7 +275,7 @@ func! AutoChdir()
       let full_path = join([''] + path.pathSegments, '/')
     end
   end
-  exe 'cd ' . substitute(expand('%:h'), '\', '/', 'g')
+  exe 'cd' substitute(expand('%:h'), '\', '/', 'g')
 endf
 
 aug auto_chdir
@@ -718,43 +709,28 @@ func! MakeUpper()
 endf
 
 func! Silent(cmd)
-  return printf("exe 'norm! :%s<C-v><CR>'", a:cmd)
+  return printf("exe 'normal! :%s<C-v><CR>'", substitute(a:cmd, "'", "''", 'g'))
 endf
 
 func! LSMap(map, key, cmd, expect_pause, ...)
   if type(a:cmd) == 3
-    if a:expect_pause && !s:win_gui
-      call map(a:cmd, 'Silent(v:val)')
-    end
-    let cmd = join(a:cmd, '<Bar>')
+    let cmd_list = a:cmd
   elseif type(a:cmd) == 1
-    let cmd = a:cmd
-    if get(a:, 1, 1)
-      let cmd = 'call ' . cmd
-      if a:expect_pause && !s:win_gui
-        let cmd = Silent(cmd)
-      end
-    end
+    let cmd_list = [(get(a:, 1, 1) ? 'call ' : '') . a:cmd]
   end
   if a:expect_pause && !s:win_gui
-    let pause_cmd = [
-\     'sil exe "!read -sN1"',
-\     'redraw!'
-\   ]
-    let cmd = join([':<C-u>' . cmd] + pause_cmd, '<Bar>') . '<CR>'
-  else
-    let cmd = ':<C-u>' . cmd . '<CR>'
+    call map(cmd_list, 'Silent(v:val)')
+    let cmd_list += ['sil exe "!read -sN1"', 'redraw!']
   end
+  let cmd = ':<C-u>' . join(cmd_list, '<Bar>') . '<CR>'
   if a:map[0] ==# 'i'
     let cmd = '<C-o>' . cmd
   end
   let cmd = printf('%s <buffer> <silent> %s %s', a:map, a:key, cmd)
-  exe cmd
-  if a:expect_pause
-    if s:win_gui
-      exe cmd . '<CR>'
-    end
+  if a:expect_pause && s:win_gui
+    let cmd .= '<CR>'
   end
+  exe cmd
 endf
 " }}}
 
