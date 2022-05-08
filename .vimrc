@@ -145,6 +145,7 @@ cno ` <C-r>
 cno `` `
 
 vn <LeftMouse> "+ygV
+vn <RightMouse> "+:<C-u>call VPut()<CR>
 nn <silent> <Space>y :call ClipAll()<CR>
 vn <silent> gy :call ClipVisual()<CR>
 
@@ -162,6 +163,9 @@ cno <M-k> <Up>
 let s:plug_path = '~/.vim/autoload/plug.vim'
 
 func! GetPlug()
+  if s:win
+    return
+  end
   let url = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
   sil exe printf('!curl --create-dirs -sLo %s %s', s:plug_path, url)
   redraw!
@@ -173,7 +177,7 @@ com! -bar GetPlug call GetPlug()
 let g:has_plug = !empty(glob(s:plug_path))
 
 if g:has_plug
-  call plug#begin('~/.vim/plugged')
+  sil! call plug#begin('~/.vim/plugged')
 else
   com! -bar -nargs=* Plug
 end
@@ -631,7 +635,6 @@ func! PureTextConfig()
     setl nocul
     setl wrap
     if s:win_gui
-      setl slm=mouse
       if wordcount()['chars'] == 0
         star
       end
@@ -1025,7 +1028,7 @@ func! ClipAll()
     let eol = &eol
     se nofixeol
     se noeol
-    sil w !clip.exe --copy
+    sil w !cb.exe --copy
     let &fixeol = fixeol
     let &eol = eol
   endt
@@ -1037,7 +1040,7 @@ func! ClipVisual() range
   try
     let @+ = @"
   catch
-    call system('clip.exe --copy', @")
+    call system('cb.exe --copy', @")
   endt
   let @" = reg
 endf
@@ -1049,7 +1052,7 @@ func! Clip() range
   try
     let @+ = @"
   catch
-    call system('clip.exe --copy', @")
+    call system('cb.exe --copy', @")
   endt
   let @" = reg
 endf
