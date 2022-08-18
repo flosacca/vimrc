@@ -7,7 +7,7 @@ se bs=2
 se noswf
 se ffs=unix,dos
 se enc=utf-8
-se fencs=ucs-bom,utf-8,cp932,cp936,latin1
+se fencs=ucs-bom,utf-8,cp932,gb18030,latin1
 
 se rtp^=~/.vim
 se rtp+=~/.vim/after
@@ -93,7 +93,7 @@ nn <silent> & :&&<CR>
 
 nn gs :%s//g<Left><Left>
 nn g* :%s/\<<C-r><C-w>\>//g<Left><Left>
-nn g/ /^\s*\zs
+no g/ /^\s*\zs
 
 " vn <silent> s :call VSub('g')<CR>
 vn s :s//g<Left><Left>
@@ -200,10 +200,14 @@ Plug 'rust-lang/rust.vim'
 Plug 'udalov/kotlin-vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
+Plug 'gutenye/json5.vim'
+Plug 'cespare/vim-toml'
 Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
+Plug 'MaxMEllon/vim-jsx-pretty'
 Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
 Plug 'flosacca/nginx.vim'
+Plug 'isobit/vim-caddyfile'
 Plug 'gko/vim-coloresque'
 " --------------------------------
 
@@ -211,6 +215,7 @@ Plug 'gko/vim-coloresque'
 Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
+Plug 'godlygeek/tabular'
 " Plug 'terryma/vim-multiple-cursors'
 if s:vim8
   Plug 'mg979/vim-visual-multi'
@@ -225,10 +230,9 @@ Plug 'tpope/vim-rails'
 Plug 'iamcco/markdown-preview.nvim'
 " --------------------------------
 
-" Plug 'kana/vim-fakeclip'
-" Plug 'kana/vim-altr'
+Plug 'kana/vim-altr'
 " Plug 'kana/vim-submode'
-" Plug 'kana/vim-arpeggio'
+Plug 'kana/vim-arpeggio'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-syntax'
 
@@ -365,6 +369,12 @@ let g:VM_maps = {
 \   'Find Subword Under': '',
 \   'Visual Cursors': '<C-n>',
 \ }
+
+call arpeggio#load()
+Arpeggio inoremap jk <Esc>
+
+nm <Space>[ <Plug>(altr-forward)
+nm <Space>] <Plug>(altr-back)
 " }}}
 
 " ---------------------------- }}}
@@ -453,10 +463,10 @@ se ts=2
 se sw=0
 se sts=-1
 se et
-se si
+" se si
 se nojs
 
-com! -bar -nargs=1 Tab setl ts=<args> | setl sw=0 | setl sts=-1
+com! -bar -nargs=1 TS setl ts=<args> | setl sw=0 | setl sts=-1
 
 aug add_file_type
   au!
@@ -473,6 +483,12 @@ func! AddFileType()
     se ft=ia64
   elseif ext =~? '\v^(asm|inc)$'
     se ft=masm
+  end
+  if &ft == 'json'
+    if v:version >= 802
+      se ft=jsonc
+    end
+    hi Error NONE
   end
   let base = expand('%:t')
   if base ==# '.gemrc'
@@ -527,9 +543,8 @@ func! FileTypeConfig()
     setl ts=4
   end
 
-  if &ft =~ '\v^(make)$'
+  if &ft =~ '\v^(make|caddyfile)$'
     setl noet
-    call LSMap('nn', '<F7>', ['up', 'call Make()'], 1)
   end
 
   if &ft =~ '\v^(vue)$'
@@ -545,6 +560,10 @@ func! FileTypeConfig()
     com! -bar PrevDef call search('\v^\s*(def|class)>', 'b')
     call LSMap('no', ']f', 'NextDef', 0, 0)
     call LSMap('no', '[f', 'PrevDef', 0, 0)
+  end
+
+  if &ft == 'make'
+    call LSMap('nn', '<F7>', ['up', 'call Make()'], 1)
   end
 
   if &ft =~ '\v^(c|cpp)$'
@@ -635,6 +654,7 @@ func! PureTextConfig()
     setl nocul
     setl wrap
     if s:win_gui
+      " setl slm=mouse
       if wordcount()['chars'] == 0
         star
       end
@@ -848,6 +868,8 @@ func! Run()
     exe '!ruby "%" ' . g:run_args
   elseif &ft == 'javascript'
     exe '!node "%" ' . g:run_args
+  elseif &ft == 'scheme'
+    exe '!gosh "%" ' . g:run_args
   elseif &ft == 'autohotkey'
     call WinOpen('"%"', 0)
   elseif &ft == 'tex'
