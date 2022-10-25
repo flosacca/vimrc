@@ -234,7 +234,6 @@ Plug 'iamcco/markdown-preview.nvim'
 
 Plug 'kana/vim-altr'
 " Plug 'kana/vim-submode'
-Plug 'kana/vim-arpeggio'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-syntax'
 
@@ -382,9 +381,6 @@ let g:VM_maps = {
 \   'Visual Cursors': '<C-n>',
 \ }
 
-call arpeggio#load()
-Arpeggio inoremap jk <Esc>
-
 nm <Space>[ <Plug>(altr-forward)
 nm <Space>] <Plug>(altr-back)
 " }}}
@@ -402,7 +398,7 @@ se nosmd
 
 aug move_help_window
   au!
-  au BufRead * if &bt == 'help' | winc L | end
+  au BufRead * if &bt == 'help' | setl nu | winc L | end
 aug END
 
 if exists('$NOBLINK')
@@ -518,6 +514,8 @@ let g:sh_no_error = 1
 let g:tex_flavor = 'latex'
 let g:tex_no_error = 1
 
+let g:html_indent_script1 = 'zero'
+
 let g:python_highlight_all = 1
 let g:python_highlight_space_errors = 0
 
@@ -567,6 +565,10 @@ func! FileTypeConfig()
 
   if &ft =~ '\v^(c|cpp|java)$'
     setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
+  end
+
+  if &ft == 'html'
+    setl indk+=0],0)
   end
 
   if &ft =~ '\v^(python|ruby)$'
