@@ -65,8 +65,8 @@ no <Space>v V
 
 vn x "_d
 vn <silent> p :<C-u>call VPut()<CR>
-vn P "0p
-vn gp p
+vn P p
+vn gp "0p
 
 nn gg gg0
 nn G G0
@@ -160,7 +160,7 @@ cno <M-k> <Up>
 
 " Plugins -------------------- {{{
 
-let s:plug_path = '~/.vim/autoload/plug.vim'
+let s:plug_path = expand('~/.vim/autoload/plug.vim')
 
 func! GetPlug()
   if s:win
@@ -174,7 +174,7 @@ endf
 
 com! -bar GetPlug call GetPlug()
 
-let g:has_plug = !empty(glob(s:plug_path))
+let g:has_plug = filereadable(s:plug_path)
 
 if g:has_plug
   sil! call plug#begin('~/.vim/plugged')
@@ -226,7 +226,7 @@ Plug 'mattn/emmet-vim'
 Plug 'tpope/vim-rails'
 " --------------------------------
 
-" Extern -------------------------
+" External -----------------------
 Plug 'iamcco/markdown-preview.nvim'
 " --------------------------------
 
@@ -428,7 +428,7 @@ if s:gui
     au!
     au GUIEnter * sim ~x
   aug END
-elseif $TERM =~# '256color'
+elseif $TERM =~# '\v<(256color|direct)>'
   if HasTC()
     let &t_8f = "\e[38;2;%lu;%lu;%lum"
     let &t_8b = "\e[48;2;%lu;%lu;%lum"
@@ -493,6 +493,8 @@ func! AddFileType()
   let base = expand('%:t')
   if base ==# '.gemrc'
     se ft=yaml
+  elseif base ==# 'pip.conf'
+    se ft=dosini
   end
 endf
 
@@ -582,6 +584,10 @@ func! FileTypeConfig()
     call LSMap('nn', '<F7>', 'Compile()', 1)
   end
 
+  if &ft == 'nginx'
+    call LSMap('nn', '<Space>s', ['up', 'call system("sudo nginx -s reload")'], 0)
+  end
+
   if &ft == 'sh'
     com! -bar -range Upper <line1>,<line2>s/\v\$\w+>|<\w+\=/\U&/g
   end
@@ -612,7 +618,8 @@ func! FileTypeConfig()
 endf
 
 func! BinReadPost()
-  if &fenc == 'latin1' && &bt != 'help'
+  if expand('%:e') != 'txt' && &fenc == 'latin1'
+    let b:bin = 1
     se ft=text
     setl fdm=manual
     setl bin
@@ -622,7 +629,7 @@ func! BinReadPost()
 endf
 
 func! BinWritePre()
-  if &fenc == 'latin1'
+  if get(b:, 'bin', 0)
     let b:cursor_pos = getpos('.')
     %y c
     %s/\v^(\x{8}:)? ?((\x\x)+( (\x\x)+)*)?( *|  .*)$/\2/g
@@ -632,7 +639,7 @@ func! BinWritePre()
 endf
 
 func! BinWritePost()
-  if &fenc == 'latin1'
+  if get(b:, 'bin', 0)
     setl nobin
     %d _
     put! c
