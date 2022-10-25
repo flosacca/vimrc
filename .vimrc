@@ -53,7 +53,9 @@ nn U <C-r>
 
 aug local_map
   au!
-  au BufEnter,VimEnter * no <buffer> <silent> q :call Quit()<CR>
+  " It would have been enough with BufWinEnter, but NERDTree overrides the
+  " mapping anyway in some cases, so we override it back in FileType.
+  au BufWinEnter,FileType * no <buffer> <silent> q :call Quit()<CR>
 aug END
 
 no <silent> Q :call QuitAll()<CR>
@@ -266,29 +268,39 @@ let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 
 let g:NERDTreeMapHelp = 'K'
-let g:NERDTreeMapQuit = '<C-q>'
+let g:NERDTreeMapQuit = '<Space>q'
 
 nn <silent> <Space>t :NERDTreeToggle<CR>
 
 " This doesn't work when editing a new dir
 let g:NERDTreeChDirMode = 2
 
-func! AutoChdir()
-  let full_path = expand('%:h')
+func! NerdTreeChdir()
   if exists('b:NERDTree')
     let path = b:NERDTree.root.path
     if s:win
-      let full_path = join([path.drive] + path.pathSegments, '\')
+      let dirname = join([path.drive] + path.pathSegments, '\')
     else
-      let full_path = join([''] + path.pathSegments, '/')
+      let dirname = join([''] + path.pathSegments, '/')
     end
+    call chdir(dirname)
   end
-  exe 'cd' substitute(expand('%:h'), '\', '/', 'g')
+endf
+
+func! AutoChdir()
+  let dirname = expand('%:h')
+  if isdirectory(dirname)
+    call chdir(dirname)
+  elseif !empty(dirname) && !exists('b:no_dir')
+    let b:no_dir = 1
+    echoe printf("Directory '%s' does not exist", dirname)
+  end
 endf
 
 aug auto_chdir
   au!
-  au BufEnter,FileType * call AutoChdir()
+  au BufEnter * call AutoChdir()
+  au FileType,BufEnter * call NerdTreeChdir()
 aug END
 " }}}
 
