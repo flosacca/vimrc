@@ -274,6 +274,10 @@ nn <silent> <Space>t :NERDTreeToggle<CR>
 " This doesn't work when editing a new dir
 let g:NERDTreeChDirMode = 2
 
+func! Chdir(dirname)
+  exe 'cd' escape(substitute(a:dirname, '/\?$', '/', ''), " \t\n\\")
+endf
+
 func! NerdTreeChdir()
   if exists('b:NERDTree')
     let path = b:NERDTree.root.path
@@ -282,14 +286,14 @@ func! NerdTreeChdir()
     else
       let dirname = join([''] + path.pathSegments, '/')
     end
-    call chdir(dirname)
+    call Chdir(dirname)
   end
 endf
 
 func! AutoChdir()
   let dirname = expand('%:h')
   if isdirectory(dirname)
-    call chdir(dirname)
+    call Chdir(dirname)
   elseif !empty(dirname) && !exists('b:no_dir')
     let b:no_dir = 1
     echoe printf("Directory '%s' does not exist", dirname)
