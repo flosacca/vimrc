@@ -274,29 +274,34 @@ nn <silent> <Space>t :NERDTreeToggle<CR>
 " This doesn't work when editing a new dir
 let g:NERDTreeChDirMode = 2
 
-func! Chdir(dirname)
-  exe 'cd' escape(substitute(a:dirname, '/\?$', '/', ''), " \t\n\\")
+func! Chdir(dir)
+  let dir = a:dir
+  if s:win
+    let dir = substitute(dir, '\\', '/', 'g')
+  end
+  let dir = substitute(dir, '/\?$', '/', '')
+  exe 'cd' escape(dir, " \t\n\\")
 endf
 
 func! NerdTreeChdir()
   if exists('b:NERDTree')
     let path = b:NERDTree.root.path
     if s:win
-      let dirname = join([path.drive] + path.pathSegments, '\')
+      let dir = join([path.drive] + path.pathSegments, '\')
     else
-      let dirname = join([''] + path.pathSegments, '/')
+      let dir = join([''] + path.pathSegments, '/')
     end
-    call Chdir(dirname)
+    call Chdir(dir)
   end
 endf
 
 func! AutoChdir()
-  let dirname = expand('%:h')
-  if isdirectory(dirname)
-    call Chdir(dirname)
-  elseif !empty(dirname) && !exists('b:no_dir')
+  let dir = expand('%:h')
+  if isdirectory(dir)
+    call Chdir(dir)
+  elseif !empty(dir) && !exists('b:no_dir')
     let b:no_dir = 1
-    echoe printf("Directory '%s' does not exist", dirname)
+    echoe printf("Directory '%s' does not exist", dir)
   end
 endf
 
