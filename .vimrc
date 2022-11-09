@@ -273,46 +273,6 @@ nn <silent> <Space>t :NERDTreeToggle<CR>
 
 " This doesn't work when editing a new dir
 let g:NERDTreeChDirMode = 2
-
-func! Chdir(dir)
-  let dir = a:dir
-  if s:win
-    let dir = substitute(dir, '\\', '/', 'g')
-  end
-  let dir = substitute(dir, '/\?$', '/', '')
-  exe 'cd' escape(dir, " \t\n\\")
-endf
-
-func! NerdTreeChdir()
-  if exists('b:NERDTree')
-    let path = b:NERDTree.root.path
-    if s:win
-      let dir = join([path.drive] + path.pathSegments, '\')
-    else
-      let dir = join([''] + path.pathSegments, '/')
-    end
-    call Chdir(dir)
-  end
-endf
-
-func! AutoChdir()
-  if exists('b:tarfile')
-    return
-  end
-  let dir = expand('%:h')
-  if isdirectory(dir)
-    call Chdir(dir)
-  elseif !empty(dir) && !exists('b:no_dir')
-    let b:no_dir = 1
-    echoe printf("Directory '%s' does not exist", dir)
-  end
-endf
-
-aug auto_chdir
-  au!
-  au BufEnter * call AutoChdir()
-  au FileType,BufEnter * call NerdTreeChdir()
-aug END
 " }}}
 
 " Emmet {{{
@@ -432,12 +392,13 @@ else
 end
 
 func! HasTC()
-  if has('termguicolors')
-    if !empty($TMUX)
-      return system('tmux info') =~# '\v<Tc>[^\n]*<true>'
-    end
-    return 1
+  if !has('termguicolors')
+    return 0
   end
+  if !empty($TMUX)
+    return system('tmux info') =~# '\v<Tc>[^\n]*<true>'
+  end
+  return 1
 endf
 
 let s:colors = 1
@@ -701,11 +662,46 @@ aug file_type_config
   au BufRead,BufNewFile * call PureTextConfig()
 aug END
 
-com! -bar -range Join <line1>,<line2>call Unwrap()
-com! -bar -range J <line1>,<line2>call Unwrap()
+func! Chdir(dir)
+  let dir = a:dir
+  if s:win
+    let dir = substitute(dir, '\\', '/', 'g')
+  end
+  let dir = substitute(dir, '/\?$', '/', '')
+  exe 'cd' escape(dir, " \t\n\\")
+endf
 
-com! -bar -range Clip <line1>,<line2>call Clip()
-com! -bar -range Y <line1>,<line2>call Clip()
+func! AutoChdir()
+  if exists('b:tarfile')
+    return
+  end
+  let dir = expand('%:h')
+  if isdirectory(dir)
+    call Chdir(dir)
+  elseif !empty(dir) && !exists('b:no_dir')
+    let b:no_dir = 1
+    echoe printf("Directory '%s' does not exist", dir)
+  end
+endf
+
+func! NerdTreeChdir()
+  if !exists('b:NERDTree')
+    return
+  end
+  let path = b:NERDTree.root.path
+  if s:win
+    let dir = join([path.drive] + path.pathSegments, '\')
+  else
+    let dir = join([''] + path.pathSegments, '/')
+  end
+  call Chdir(dir)
+endf
+
+aug auto_chdir
+  au!
+  au BufEnter * call AutoChdir()
+  au FileType,BufEnter * call NerdTreeChdir()
+aug END
 
 " ---------------------------- }}}
 
@@ -1074,6 +1070,9 @@ func! Unwrap() range
   sil exe range . 'd _'
 endf
 
+com! -bar -range Join <line1>,<line2>call Unwrap()
+com! -bar -range J <line1>,<line2>call Unwrap()
+
 func! ClipAll()
   try
     %y +
@@ -1111,6 +1110,9 @@ func! Clip() range
   endt
   let @" = reg
 endf
+
+com! -bar -range Clip <line1>,<line2>call Clip()
+com! -bar -range Y <line1>,<line2>call Clip()
 
 func! VSub(...) range
   let pat = Input('Pattern: ')
@@ -1162,7 +1164,7 @@ endf
 
 func! CenterAfter(ncmd)
   call TryExec('normal! ' . a:ncmd, '486')
-  if s:exception != ''
+  if !empty(s:exception)
     return
   end
   if foldclosed(line('.')) != -1
@@ -1172,7 +1174,7 @@ func! CenterAfter(ncmd)
 endf
 
 func! ShowSearch(ncmd)
-  if s:exception != ''
+  if !empty(s:exception)
     return
   end
   if a:ncmd ==# 'n'
