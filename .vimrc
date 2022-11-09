@@ -296,6 +296,9 @@ func! NerdTreeChdir()
 endf
 
 func! AutoChdir()
+  if exists('b:tarfile')
+    return
+  end
   let dir = expand('%:h')
   if isdirectory(dir)
     call Chdir(dir)
@@ -487,7 +490,7 @@ com! -bar -nargs=1 TS setl ts=<args> | setl sw=0 | setl sts=-1
 
 aug add_file_type
   au!
-  au BufRead * call AddFileType()
+  au BufRead,FileType * call AddFileType()
 aug END
 
 func! AddFileType()
@@ -780,7 +783,7 @@ func! LSMap(map, key, cmd, expect_pause, ...)
   end
   if a:expect_pause && !s:win_gui
     call map(cmd_list, 'Silent(v:val)')
-    let cmd_list += ['sil exe "!read -sN1"', 'redraw!']
+    let cmd_list += ["sil exe \"!bash -c 'read -sN1'\"", 'redraw!']
   end
   let cmd = ':<C-u>' . join(cmd_list, '<Bar>') . '<CR>'
   if a:map[0] ==# 'i'
