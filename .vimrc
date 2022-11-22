@@ -202,7 +202,7 @@ Plug 'rust-lang/rust.vim'
 Plug 'udalov/kotlin-vim'
 Plug 'gabrielelana/vim-markdown'
 Plug 'vim-language-dept/css-syntax.vim'
-Plug 'gutenye/json5.vim'
+Plug 'kevinoid/vim-jsonc'
 Plug 'cespare/vim-toml'
 Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
 Plug 'MaxMEllon/vim-jsx-pretty'
@@ -466,7 +466,7 @@ func! AddFileType()
     se ft=masm
   end
   if &ft == 'json'
-    if v:version >= 802
+    if s:vim8 && !empty(getcompletion('jsonc', 'filetype'))
       se ft=jsonc
     end
     hi Error NONE
