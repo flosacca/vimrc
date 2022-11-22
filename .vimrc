@@ -16,9 +16,11 @@ se vi+=n~/.viminfo
 " Wait forever for mappings
 se noto
 
-" Wait no time for key codes
+" Wait 1ms for key codes
+" Ideally waiting 0ms is just OK, but there is a problem where vim
+" occasionally receives uninterpreted key codes when launched from wsltty
 se ttimeout
-se ttm=0
+se ttm=1
 
 se kp=
 se nosol
