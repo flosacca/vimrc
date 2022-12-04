@@ -214,6 +214,7 @@ Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
 Plug 'flosacca/nginx.vim'
 Plug 'isobit/vim-caddyfile'
+Plug 'ekalinin/Dockerfile.vim'
 Plug 'gko/vim-coloresque'
 " --------------------------------
 
@@ -377,7 +378,7 @@ aug move_help_window
   au BufRead * if &bt == 'help' | setl nu | winc L | end
 aug END
 
-if exists('$NOBLINK')
+if !exists('$VIM_CURSOR_BLINK')
   let &t_ti .= "\e[2 q"
   let &t_te .= "\e[4 q"
   let &t_SI .= "\e[6 q"
@@ -408,7 +409,7 @@ endf
 let s:colors = 1
 if s:gui
   se go=
-  se gfn=ubuntu_mono:h14
+  se gfn=mononoki_nf:h13
   aug maximize_gui
     au!
     au GUIEnter * sim ~x
