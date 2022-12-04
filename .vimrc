@@ -155,6 +155,8 @@ vn <silent> gy :call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
 
+nn <silent> gK :call SeamlessJoin()<CR>
+
 no <M-x> :
 cno <M-j> <Down>
 cno <M-k> <Up>
@@ -1058,6 +1060,15 @@ func! ChangeSurround(key, sub)
   call setpos("'>", obj[0][1])
   normal! gvp
   let @" = reg
+endf
+
+func! SeamlessJoin()
+  let l = line('.')
+  if l != line('$')
+    let lines = getline(l, l + 1)
+    call deletebufline('%', l + 1)
+    call setline(l, lines[0] . LStrip(lines[1]))
+  end
 endf
 
 func! Unwrap() range
