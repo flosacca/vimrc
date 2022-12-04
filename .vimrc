@@ -42,6 +42,10 @@ aug END
 
 " Global Mappings ------------ {{{
 
+" Be careful not to type spaces in front of '|', or the spaces will become
+" part of the mapping.
+com! -bar -nargs=+ Map nn <args>|vn <args>
+
 " Unmapping {{{
 sil! vu <C-x>
 nn <C-q> <Nop>
@@ -57,15 +61,15 @@ aug local_map
   au!
   " It would have been enough with BufWinEnter, but NERDTree overrides the
   " mapping anyway in some cases, so we override it back in FileType.
-  au BufWinEnter,FileType * no <buffer> <silent> q :call Quit()<CR>
+  au BufWinEnter,FileType * Map <buffer> <silent> q :call Quit()<CR>
 aug END
 
-no <silent> Q :call QuitAll()<CR>
-no <Space>q q
+Map <silent> Q :call QuitAll()<CR>
+Map <Space>q q
 
 nn <silent> <Space>w :up<CR>
 
-no <Space>v V
+Map <Space>v V
 
 vn x "_d
 vn <silent> p :<C-u>call VPut()<CR>
@@ -77,19 +81,19 @@ nn G G0
 " }}}
 
 " Moving {{{
-no <Space>h gT
-no <Space>l gt
+Map <Space>h gT
+Map <Space>l gt
 
-no <Space>j <C-d>
-no <Space>k <C-u>
-no <Space>u <C-f>
-no <Space>i <C-b>
-no <silent> <Space>f :<C-u>call ViewingMode()<CR>
+Map <Space>j <C-d>
+Map <Space>k <C-u>
+Map <Space>u <C-f>
+Map <Space>i <C-b>
+Map <silent> <Space>f :<C-u>call ViewingMode()<CR>
 
-no <C-h> <C-w>h
-no <C-j> <C-w>j
-no <C-k> <C-w>k
-no <C-l> <C-w>l
+Map <C-h> <C-w>h
+Map <C-j> <C-w>j
+Map <C-k> <C-w>k
+Map <C-l> <C-w>l
 " }}}
 
 " Search & Replace {{{
@@ -157,7 +161,7 @@ nn <Space>; A;<Esc>
 
 nn <silent> gK :call SeamlessJoin()<CR>
 
-no <M-x> :
+Map <M-x> :
 cno <M-j> <Down>
 cno <M-k> <Up>
 " }}}
