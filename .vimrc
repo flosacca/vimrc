@@ -32,9 +32,13 @@ let s:gui = has('gui_running')
 let s:win_gui = s:win && s:gui
 let s:vim8 = v:version >= 800
 
+if !empty($VIM_FENCS)
+  let &fencs = $VIM_FENCS
+end
+
 aug detect_stdin
   au!
-  au StdinReadPost * let b:stdin = 1
+  au StdinReadPost * let b:stdin = 1 | setl nomod
   au BufWrite * unl! b:stdin
 aug END
 
@@ -382,7 +386,7 @@ aug move_help_window
   au BufRead * if &bt == 'help' | setl nu | winc L | end
 aug END
 
-if !exists('$VIM_CURSOR_BLINK')
+if empty($VIM_CURSOR_BLINK)
   let &t_ti .= "\e[2 q"
   let &t_te .= "\e[4 q"
   let &t_SI .= "\e[6 q"
