@@ -739,6 +739,7 @@ endf
 func! GetText(lp, rp)
   let pos = getpos('.')
   let reg = @"
+  normal! vv
   call setpos("'<", a:lp)
   call setpos("'>", a:rp)
   normal! gvy
