@@ -982,15 +982,15 @@ func! TryFakeCmdLine()
 endf
 
 func! Quit()
-  if !exists('b:stdin')
-    q
-  else
+  if exists('b:stdin')
     q!
+  else
+    q
   end
 endf
 
 func! QuitAll()
-  if bufnr('$') == 1
+  if bufnr('$') == 1 && winnr('$') == 1
     call Quit()
   else
     qa
