@@ -532,7 +532,8 @@ let s:indent4 = [
 \ ]
 
 func! FileTypeConfig()
-  setl fo-=ro
+  setl fo-=r
+  setl fo-=o
 
   call LSMap('nn', '<F8>', 'Run()', 1)
   call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
