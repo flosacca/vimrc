@@ -338,10 +338,15 @@ sil! call textobj#user#plugin('latex', {
 \ })
 
 sil! call textobj#user#plugin('ruby', {
-\   'block': {
+\   'do-block': {
 \     'pattern': ['\<do\>', '\<end\>'],
 \     'select-a': 'af',
 \     'select-i': 'if',
+\   },
+\   'brace-block-args': {
+\     'pattern': ['{\( *|[^|]\+|\)\?', '}'],
+\     'select-a': 'aV',
+\     'select-i': 'iV',
 \   },
 \ })
 " }}}
