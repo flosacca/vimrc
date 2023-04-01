@@ -69,7 +69,7 @@ aug local_map
 aug END
 
 Map <silent> Q :call QuitAll()<CR>
-Map <Space>q q
+Map [q q
 
 nn <silent> <Space>w :up<CR>
 
@@ -512,6 +512,8 @@ let g:python_highlight_space_errors = 0
 
 let g:ruby_indent_assignment_style = 'variable'
 
+let g:cargo_shell_command_runner = 'bel vert term'
+
 let g:go_highlight_trailing_whitespace_error = 0
 
 let g:vim_vue_plugin_use_scss = 1
@@ -526,6 +528,7 @@ let s:indent4 = [
 \   'make',
 \   'c',
 \   'cpp',
+\   'rust',
 \   'java',
 \   'kotlin',
 \   'python',
@@ -584,6 +587,12 @@ func! FileTypeConfig()
   if &ft =~ '\v^(java|cuda|masm|tex)$'
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
+  end
+
+  if &ft == 'rust'
+    call LSMap('nn', '<F7>', ['up', 'Ctest'], 0)
+    call LSMap('nn', '<F8>', ['up', 'exe "Crun " . g:run_args'], 0)
+    call LSMap('nn', '<F9>', ['up', 'exe "Crun " . g:run_args'], 0)
   end
 
   if &ft =~ '^s[ca]ss$'
