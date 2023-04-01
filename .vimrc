@@ -830,6 +830,8 @@ endf
 
 " Call run.exe written in AHK
 func! WinOpen(name, ...)
+  let envs = [$VIMRUNTIME, $VIM, $MYVIMRC]
+  let [$VIMRUNTIME, $VIM, $MYVIMRC] = ['', '', '']
   let cmd = '!run '
   if get(a:, 2, 0)
     let cmd .= '*RunAs '
@@ -843,6 +845,7 @@ func! WinOpen(name, ...)
       redraw!
     end
   end
+  let [$VIMRUNTIME, $VIM, $MYVIMRC] = envs
 endf
 
 com! -bar -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
