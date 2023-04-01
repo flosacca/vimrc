@@ -224,6 +224,9 @@ Plug 'flosacca/nginx.vim'
 Plug 'isobit/vim-caddyfile'
 Plug 'ekalinin/Dockerfile.vim'
 Plug 'gko/vim-coloresque'
+if s:vim8
+  Plug 'ionide/Ionide-vim'
+end
 " --------------------------------
 
 " Operation ----------------------
