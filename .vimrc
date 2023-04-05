@@ -448,7 +448,8 @@ try
   hi! link Operator GruvboxRed
   let g:lightline = {
 \   'colorscheme': 'gruvbox',
-\   'mode_map': { 'c': 'NORMAL' }
+\   'mode_map': { 'c': 'NORMAL' },
+\   'tabline': { 'right': [] }
 \ }
 catch
   se t_Co=256
