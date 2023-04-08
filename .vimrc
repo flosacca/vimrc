@@ -7,7 +7,7 @@ se bs=2
 se noswf
 se ffs=unix,dos
 se enc=utf-8
-se fencs=ucs-bom,utf-8,cp932,gb18030,latin1
+se fencs=ucs-bom,utf-8,sjis,gb18030,latin1
 
 se rtp^=~/.vim
 se rtp+=~/.vim/after
@@ -389,10 +389,63 @@ se fdm=marker
 se ls=2
 se nosmd
 
-aug move_help_window
+aug gui_config
   au!
-  au BufRead * if &bt == 'help' | setl nu | winc L | end
+  au GUIEnter * call GUIConfig()
 aug END
+
+func! GUIConfig()
+  se go=
+  sil! se gfn=mononoki_nf:h13
+  sil! se gfw=nsimsun:h14
+  se ambw=double
+  if !s:win
+    return
+  end
+  try
+    call VimTweak('EnableMaximize', 1)
+  catch
+    sim ~x
+  endt
+endf
+
+nn <silent> [j :se gfw=ms_mincho:h14<CR>
+nn <silent> ]j :se gfw& gfn=ms_mincho:h14<CR>
+com! -bar -nargs=1 Gfn se gfw& gfn=<args>
+
+func! SetPrettyScheme()
+  try
+    let g:gruvbox_italic = 0
+    colo gruvbox
+    hi! link Operator GruvboxRed
+    let g:lightline = {
+\     'colorscheme': 'gruvbox',
+\     'mode_map': { 'c': 'NORMAL' },
+\     'tabline': { 'right': [] }
+\   }
+  catch
+    return 0
+  endt
+  return 1
+endf
+
+let s:term_colored = !s:gui && $TERM =~# '\v<(256color|direct)>'
+let s:enable_pretty_scheme = s:gui || s:term_colored
+
+if s:term_colored && has('termguicolors')
+      \ && (empty($TMUX) || system('tmux info') =~# '\v<Tc>[^\n]*<true>')
+  let &t_8f = "\e[38;2;%lu;%lu;%lum"
+  let &t_8b = "\e[48;2;%lu;%lu;%lum"
+  se tgc
+end
+
+se bg=dark
+if !s:enable_pretty_scheme || !SetPrettyScheme()
+  se t_Co=256
+  se nocuc
+  se nocul
+  colo desert
+end
 
 if empty($VIM_CURSOR_BLINK)
   let &t_ti .= "\e[2 q"
@@ -412,51 +465,10 @@ else
   end
 end
 
-func! HasTC()
-  if !has('termguicolors')
-    return 0
-  end
-  if !empty($TMUX)
-    return system('tmux info') =~# '\v<Tc>[^\n]*<true>'
-  end
-  return 1
-endf
-
-let s:colors = 1
-if s:gui
-  se go=
-  se gfn=mononoki_nf:h13
-  aug maximize_gui
-    au!
-    au GUIEnter * sim ~x
-  aug END
-elseif $TERM =~# '\v<(256color|direct)>'
-  if HasTC()
-    let &t_8f = "\e[38;2;%lu;%lu;%lum"
-    let &t_8b = "\e[48;2;%lu;%lu;%lum"
-    se tgc
-  end
-else
-  unl s:colors
-end
-
-try
-  unl s:colors
-  se bg=dark
-  let g:gruvbox_italic = 0
-  colo gruvbox
-  hi! link Operator GruvboxRed
-  let g:lightline = {
-\   'colorscheme': 'gruvbox',
-\   'mode_map': { 'c': 'NORMAL' },
-\   'tabline': { 'right': [] }
-\ }
-catch
-  se t_Co=256
-  se nocuc
-  se nocul
-  colo desert
-endt
+aug move_help_window
+  au!
+  au BufRead * if &bt == 'help' | setl nu | winc L | end
+aug END
 
 " ---------------------------- }}}
 
@@ -681,9 +693,9 @@ func! PureTextConfig()
     setl wrap
     if s:win_gui
       " setl slm=mouse
-      if wordcount()['chars'] == 0
-        star
-      end
+      " if wordcount()['chars'] == 0
+      "   star
+      " end
     end
   end
 endf
@@ -849,7 +861,15 @@ func! WinOpen(name, ...)
   let [$VIMRUNTIME, $VIM, $MYVIMRC] = envs
 endf
 
-com! -bar -nargs=1 SetAlpha call libcall('vimtweak.dll', 'SetAlpha', <args>)
+func! VimTweak(func, arg)
+  try
+    call libcallnr('vimtweak64.dll', a:func, a:arg)
+  catch
+    call libcallnr('vimtweak.dll', a:func, a:arg)
+  endt
+endf
+
+com! -bar -nargs=1 SetAlpha call VimTweak('SetAlpha', <args>)
 " }}}
 
 " Compile & Run -------------- {{{
