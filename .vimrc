@@ -158,8 +158,8 @@ cno `` `
 
 vn <LeftMouse> "+ygV
 vn <RightMouse> "+:<C-u>call VPut()<CR>
-nn <silent> <Space>y :call ClipAll()<CR>
-vn <silent> gy :call ClipVisual()<CR>
+nn <silent> <Space>y :call ClipRange('1', '$', 1)<CR>
+vn <silent> gy :<C-u>call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
 
@@ -1139,46 +1139,33 @@ endf
 com! -bar -range Join <line1>,<line2>call Unwrap()
 com! -bar -range J <line1>,<line2>call Unwrap()
 
-func! ClipAll()
+func! Clip(val)
   try
-    %y +
-    let @+ = @+[:-2]
+    let @+ = a:val
   catch
-    let fixeol = &fixeol
-    let eol = &eol
-    se nofixeol
-    se noeol
-    sil w !cb.exe --copy
-    let &fixeol = fixeol
-    let &eol = eol
+    " No vim exception is thrown even if there is a shell error
+    call system('cb.exe --copy', a:val)
+    return 0
   endt
+  return 1
 endf
 
 func! ClipVisual() range
   let reg = @"
   normal! gvy
-  try
-    let @+ = @"
-  catch
-    call system('cb.exe --copy', @")
-  endt
+  call Clip(@")
   let @" = reg
 endf
 
-func! Clip() range
+func! ClipRange(first, last, ...) range
   let reg = @"
-  exe a:firstline . ',' . a:lastline . 'y'
-  let @" = @"[:-2]
-  try
-    let @+ = @"
-  catch
-    call system('cb.exe --copy', @")
-  endt
+  exe (get(a:, 1, 0) ? 'sil ' : '') . a:first . ',' . a:last . 'y'
+  call Clip(@"[:-2])
   let @" = reg
 endf
 
-com! -bar -range Clip <line1>,<line2>call Clip()
-com! -bar -range Y <line1>,<line2>call Clip()
+com! -bar -range Clip call ClipRange(<line1>, <line2>)
+com! -bar -range Y call ClipRange(<line1>, <line2>)
 
 func! VSub(...) range
   let pat = Input('Pattern: ')
