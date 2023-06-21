@@ -70,6 +70,7 @@ aug END
 
 Map <silent> Q :call QuitAll()<CR>
 Map [q q
+Map [Q Q
 
 nn <silent> <Space>w :up<CR>
 
@@ -163,7 +164,8 @@ vn <silent> gy :<C-u>call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
 
-nn <silent> gK :call SeamlessJoin()<CR>
+nn <silent> gJ :call SeamlessJoin()<CR>
+nn [J gJ
 
 Map <M-x> :
 cno <M-j> <Down>
@@ -234,6 +236,7 @@ Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'vim-scripts/tComment'
 Plug 'godlygeek/tabular'
+Plug 'dhruvasagar/vim-table-mode'
 " Plug 'terryma/vim-multiple-cursors'
 if s:vim8
   Plug 'mg979/vim-visual-multi'
@@ -363,6 +366,10 @@ let g:mkdp_auto_close = 0
 let g:mkdp_preview_options = { 'disable_sync_scroll': 1 }
 
 let g:markdown_enable_spell_checking = 0
+let g:markdown_enable_mappings = 0
+let g:markdown_enable_input_abbreviations = 0
+
+let g:table_mode_corner = '|'
 
 " let g:multi_cursor_select_all_word_key = 'g<C-n>'
 
@@ -575,7 +582,10 @@ func! FileTypeConfig()
   end
 
   if &ft =~ '\v^(c|cpp|java)$'
-    setl cino=:0,g0,N-s,(s,ws,Ws,j1,J1,m1
+    setl cino=:0,g0,N-s,(s,ws,Ws,m1,j1
+    if &ft != 'c'
+      setl cino+=J1
+    end
   end
 
   if &ft == 'html'
@@ -682,8 +692,8 @@ endf
 aug binary_config
   au!
   au BufRead * sil call BinReadPost()
-  au BufWrite * sil call BinWritePre()
-  au BufWritePost * sil call BinWritePost()
+  " au BufWrite * sil call BinWritePre()
+  " au BufWritePost * sil call BinWritePost()
 aug END
 
 func! PureTextConfig()
