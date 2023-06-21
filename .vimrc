@@ -791,6 +791,14 @@ func! GetText(lp, rp)
   return text
 endf
 
+func! EchoErr(msg)
+  echoh ErrorMsg
+  echom a:msg
+  echoh None
+endf
+
+com! -bar -nargs=1 EchoErr call EchoErr(<args>)
+
 func! TryExec(cmd, ...)
   let s:exception = ''
   let pat = get(a:, 1, '.*')
@@ -801,9 +809,7 @@ func! TryExec(cmd, ...)
       echoe v:expcetion
     end
     let s:exception = v:exception
-    echoh ErrorMsg
-    echom substitute(v:exception, '^Vim\%((\a\+)\)\?:', '', '')
-    echoh None
+    EchoErr substitute(v:exception, '^Vim\%((\a\+)\)\?:', '', '')
   endt
 endf
 
@@ -1134,20 +1140,19 @@ func! SeamlessJoin()
   end
 endf
 
-func! Unwrap() range
-  let range = a:firstline . ',' . a:lastline
+func! Unwrap(first, last)
+  let range = a:first . ',' . a:last
   let reg = @"
   sil exe range . 'y'
   let str = @"
   let @" = reg
   let str = substitute(str, '-\s*\n\s*', '', 'g')
   let str = substitute(str, '\s*\n\s*', ' ', 'g')[:-2]
-  call append(a:lastline, str)
+  call append(a:last, str)
   sil exe range . 'd _'
 endf
 
-com! -bar -range Join <line1>,<line2>call Unwrap()
-com! -bar -range J <line1>,<line2>call Unwrap()
+com! -bar -range J call Unwrap(<line1>, <line2>)
 
 func! Clip(val)
   try
@@ -1160,24 +1165,34 @@ func! Clip(val)
   return 1
 endf
 
-func! ClipVisual() range
+func! ClipVisual()
   let reg = @"
   normal! gvy
   call Clip(@")
   let @" = reg
 endf
 
-func! ClipRange(first, last, ...) range
+func! ClipRange(first, last, ...)
   let reg = @"
   exe (get(a:, 1, 0) ? 'sil ' : '') . a:first . ',' . a:last . 'y'
   call Clip(@"[:-2])
   let @" = reg
 endf
 
-com! -bar -range Clip call ClipRange(<line1>, <line2>)
 com! -bar -range Y call ClipRange(<line1>, <line2>)
 
-func! VSub(...) range
+func! Translate(first, last, from, to)
+  if len(a:from) != len(a:to)
+    EchoErr 'The lengths of the two arguments must be the same'
+    return
+  end
+  exe printf('%d,%ds/.*/\=tr(submatch(0), %s, %s)',
+        \ a:first, a:last, string(a:from), string(a:to))
+endf
+
+com! -bar -range -nargs=+ Tr call Translate(<line1>, <line2>, <f-args>)
+
+func! VSub(...)
   let pat = Input('Pattern: ')
   if pat == ''
     redraw
@@ -1190,7 +1205,7 @@ func! VSub(...) range
   call TryExec(printf("'<,'>s/%s/%s/%s", pat, sub, get(a:, 1, '')), '486')
 endf
 
-func! VPut() range
+func! VPut()
   let reg = @"
   exe printf('normal! gv"%sp', v:register)
   let @" = reg
