@@ -568,6 +568,8 @@ func! FileTypeConfig()
   setl fo-=r
   setl fo-=o
 
+  call LSMap('nn', '<Space>s', ['up', 'call Restart()'], 0)
+
   call LSMap('nn', '<F8>', 'Run()', 1)
   call LSMap('nn', '<F9>', ['up', 'call Run()'], 1)
 
@@ -597,8 +599,8 @@ func! FileTypeConfig()
   if &ft =~ '\v^(python|ruby)$'
     com! -bar NextDef call search('\v^\s*(def|class)>')
     com! -bar PrevDef call search('\v^\s*(def|class)>', 'b')
-    call LSMap('no', ']f', 'NextDef', 0, 0)
-    call LSMap('no', '[f', 'PrevDef', 0, 0)
+    call LSMap('no', ']f', ['NextDef'], 0)
+    call LSMap('no', '[f', ['PrevDef'], 0)
   end
 
   if &ft == 'make'
@@ -625,10 +627,6 @@ func! FileTypeConfig()
 
   if &ft =~ '^s[ca]ss$'
     call LSMap('nn', '<F7>', 'Compile()', 1)
-  end
-
-  if &ft == 'nginx'
-    call LSMap('nn', '<Space>s', ['up', 'call system("sudo nginx -s reload")'], 0)
   end
 
   if &ft == 'sh'
@@ -868,11 +866,11 @@ func! Silent(cmd)
   return printf("exe 'normal! :%s<C-v><CR>'", substitute(a:cmd, "'", "''", 'g'))
 endf
 
-func! LSMap(map, key, cmd, expect_pause, ...)
+func! LSMap(map, key, cmd, expect_pause)
   if type(a:cmd) == 3
     let cmd_list = a:cmd
   elseif type(a:cmd) == 1
-    let cmd_list = [(get(a:, 1, 1) ? 'call ' : '') . a:cmd]
+    let cmd_list = ['call ' . a:cmd]
   end
   if a:expect_pause && !s:win_gui
     call map(cmd_list, 'Silent(v:val)')
@@ -1020,6 +1018,19 @@ func! Debug()
   if &ft =~ '\v^(c|cpp)$'
     if !Make('debug')
       call WinOpen('gdb "%<"')
+    end
+  end
+endf
+
+func! Restart()
+  if &ft == 'nginx'
+    call system('sudo nginx -s reload')
+  elseif exists('b:rails_root')
+    call system('rails restart')
+  else
+    let path = FindUpward('.restart')
+    if !empty(path)
+      call system('touch ' . shellescape(path))
     end
   end
 endf
