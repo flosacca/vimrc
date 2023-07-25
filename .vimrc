@@ -370,6 +370,8 @@ let g:markdown_enable_mappings = 0
 let g:markdown_enable_input_abbreviations = 0
 
 let g:table_mode_corner = '|'
+let g:table_mode_motion_up_map = '[-'
+let g:table_mode_motion_down_map = ']-'
 
 " let g:multi_cursor_select_all_word_key = 'g<C-n>'
 
@@ -650,6 +652,7 @@ func! FileTypeConfig()
     setl wrap
     call LSMap('nn', '<F8>', 'Run()', 0)
     call LSMap('ino', '<F8>', 'Run()', 0)
+    let &cms = '[%%]: # (%s)'
   end
 
   if &ft =~ '^eruby'
