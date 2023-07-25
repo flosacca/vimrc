@@ -780,6 +780,38 @@ func! RStrip(str, ...)
   return substitute(a:str, '\v%^(.{-})' . pat . '%$', '\1', '')
 endf
 
+" Works like finddir() or findfile() with `;`
+func! FindUpward(filename, ...)
+  let dir = a:0 >= 2 ? a:2 : expand('%:h')
+  if !isdirectory(dir)
+    return
+  end
+  " On Linux, strangely the trailing `..` will be expanded to `../` instead of
+  " being resolved, but `../` will be resolved.
+  " So, expanding it twice should effectively resolve all `..`.
+  " Also, `:p:p` works the same as `:p`, therefore isn't useful.
+  let dir = fnamemodify(fnamemodify(dir, ':p'), ':p')
+  let max_level = get(a:, 1, -1)
+  let level = 0
+  while 1
+    let fullpath = dir . a:filename
+    if !empty(glob(fullpath))
+      return fullpath
+    end
+    if max_level >= 0 && level >= max_level
+      return
+    end
+    " Note that the result of `:h` isn't consistent. It usually doesn't have a
+    " trailing slash, but could be a single `/`.
+    let parent_dir = fnamemodify(dir . '../', ':p')
+    if parent_dir == dir
+      return
+    end
+    let dir = parent_dir
+    let level += 1
+  endw
+endf
+
 func! GetText(lp, rp)
   let pos = getpos('.')
   let reg = @"
@@ -895,22 +927,14 @@ com! -bar -nargs=1 SetAlpha call VimTweak('SetAlpha', <args>)
 let g:makefile_level = -1
 
 func! Make(...)
-  let dir = '.'
-  let level = 0
-  while 1
-    if filereadable(dir . '/Makefile')
-      exe printf('!cd %s && %s %s', dir, get(a:, 2, 'make'), get(a:, 1, ''))
-      return 1
-    end
-    if g:makefile_level >= 0 && level >= g:makefile_level
-      return 0
-    end
-    if fnamemodify(dir, ':p') == fnamemodify(dir . '/..', ':p')
-      return 0
-    end
-    let dir .= '/..'
-    let level += 1
-  endw
+  let makefile = FindUpward('Makefile', g:makefile_level)
+  if !empty(makefile)
+    let dir = fnamemodify(makefile, ':h:S')
+    let make = a:0 < 2 ? 'make' : shellescape(a:2)
+    let target = a:0 < 1 ? '' : shellescape(a:1)
+    exe printf('!cd %s && %s %s', dir, make, target)
+    return 1
+  end
 endf
 
 let g:cpp_std = 17
