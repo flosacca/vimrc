@@ -164,8 +164,9 @@ vn <silent> gy :<C-u>call ClipVisual()<CR>
 
 nn <Space>; A;<Esc>
 
-nn <silent> gJ :call SeamlessJoin()<CR>
-nn [J gJ
+nn <silent> gJ :call SeamlessJoin('.', '.+1')<CR>
+vn <silent> gJ :<C-u>call SeamlessJoin("'<", "'>")<CR>
+Map [J gJ
 
 Map <M-x> :
 cno <M-j> <Down>
@@ -1169,13 +1170,20 @@ func! ChangeSurround(key, sub)
   let @" = reg
 endf
 
-func! SeamlessJoin()
-  let l = line('.')
-  if l != line('$')
-    let lines = getline(l, l + 1)
-    call deletebufline('%', l + 1)
-    call setline(l, lines[0] . LStrip(lines[1]))
+func! SeamlessJoin(first, last)
+  let pos = getpos('.')
+  exe a:first . ',' . a:last . 'call SeamlessJoinImpl()'
+  call setpos('.', pos)
+endf
+
+func! SeamlessJoinImpl() range
+  if a:firstline >= a:lastline
+    return
   end
+  let lines = getline(a:firstline + 1, a:lastline)
+  call deletebufline('%', a:firstline + 1, a:lastline)
+  let text = join(map(lines, 'LStrip(v:val)'), '')
+  call setline(a:firstline, getline(a:firstline) . text)
 endf
 
 func! Unwrap(first, last)
