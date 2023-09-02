@@ -449,6 +449,14 @@ if s:term_colored && has('termguicolors')
   se tgc
 end
 
+" In Vim 8 within the terminal, the file info message gets cleared when
+" applying a color scheme (specifically, on `hi Normal`). We simply disable
+" the file info message here and re-enable it later. To show it manually,
+" use `:e`.
+if s:vim8 && !s:gui
+  se shm+=F
+end
+
 se bg=dark
 if !s:enable_pretty_scheme || !SetPrettyScheme()
   se t_Co=256
@@ -566,6 +574,10 @@ let s:indent4 = [
 \ ]
 
 func! FileTypeConfig()
+  if s:vim8 && !s:gui
+    se shm-=F
+  end
+
   setl fo-=r
   setl fo-=o
 
@@ -728,7 +740,7 @@ func! Chdir(dir)
 endf
 
 func! AutoChdir()
-  if exists('b:tarfile')
+  if exists('b:tarfile') || expand('%') =~ '^\w\+:'
     return
   end
   let dir = expand('%:h')
@@ -840,7 +852,7 @@ func! TryExec(cmd, ...)
     exe a:cmd
   catch
     if v:exception !~# '^Vim\%((\a\+)\)\?:E' . pat
-      echoe v:expcetion
+      echoe v:exception
     end
     let s:exception = v:exception
     EchoErr substitute(v:exception, '^Vim\%((\a\+)\)\?:', '', '')
