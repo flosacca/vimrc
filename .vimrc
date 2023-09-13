@@ -1277,6 +1277,10 @@ func! ViewingMode()
       break
     elseif cmd ==# 'Q'
       call QuitAll()
+    elseif cmd ==# 'h'
+      normal! gT
+    elseif cmd ==# 'l'
+      normal! gt
     elseif cmd ==# 'j'
       exe "normal! \<C-d>0"
     elseif cmd ==# 'k'
