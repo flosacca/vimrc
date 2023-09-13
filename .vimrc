@@ -907,11 +907,7 @@ endf
 func! WinOpen(name, ...)
   let envs = [$VIMRUNTIME, $VIM, $MYVIMRC]
   let [$VIMRUNTIME, $VIM, $MYVIMRC] = ['', '', '']
-  let cmd = '!run '
-  if get(a:, 2, 0)
-    let cmd .= '*RunAs '
-  end
-  let cmd .= a:name
+  let cmd = '!run ' . a:name
   if !get(a:, 1, 1)
     exe cmd
   else
