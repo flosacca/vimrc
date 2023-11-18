@@ -496,7 +496,7 @@ se ts=2
 se sw=0
 se sts=-1
 se et
-" se si
+se ai
 se nojs
 
 com! -bar -nargs=1 TS setl ts=<args> | setl sw=0 | setl sts=-1
