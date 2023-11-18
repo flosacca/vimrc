@@ -1200,7 +1200,7 @@ func! Unwrap(first, last)
   sil exe range . 'y'
   let str = @"
   let @" = reg
-  let str = substitute(str, '-\s*\n\s*', '', 'g')
+  let str = substitute(str, '\v%(-|%u2010)\s*\n\s*', '', 'g')
   let str = substitute(str, '\s*\n\s*', ' ', 'g')[:-2]
   call append(a:last, str)
   sil exe range . 'd _'
