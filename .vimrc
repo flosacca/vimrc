@@ -268,16 +268,47 @@ let g:EasyMotion_keys = 'asdfghwertyuiopcvbnmlkj'
 
 map gj <Plug>(easymotion-j)
 map gk <Plug>(easymotion-k)
+
+map gb <Plug>(easymotion-bl)
+map gw <Plug>(easymotion-wl)
+" map gB <Plug>(easymotion-B)
+" map gW <Plug>(easymotion-W)
+
+" map gh <Plug>(easymotion-bl)
+" map gl <Plug>(easymotion-wl)
+
+map go <Nop>
 nm go <Plug>(easymotion-overwin-line)
 
-map gb <Plug>(easymotion-b)
-map gw <Plug>(easymotion-w)
-map gB <Plug>(easymotion-ge)
-map gW <Plug>(easymotion-e)
+" map gj <Nop>
+" map gk <Nop>
+"
+" map gkj <Plug>(easymotion-b)
+" map gjk <Plug>(easymotion-w)
+"
+" map gkl <Plug>(easymotion-ge)
+" map gjl <Plug>(easymotion-e)
+"
+" map gjj <Plug>(easymotion-j)
+" map gkk <Plug>(easymotion-k)
+"
+" map gjh <Plug>(easymotion-sol-j)
+" map gkh <Plug>(easymotion-sol-k)
+
+map gh <Nop>
+map gl <Nop>
+
+map ghj <Plug>(easymotion-b)
+map ghk <Plug>(easymotion-ge)
+map glj <Plug>(easymotion-w)
+map glk <Plug>(easymotion-e)
+
+map ghh <Plug>(easymotion-B)
+map ghl <Plug>(easymotion-gE)
+map glh <Plug>(easymotion-W)
+map gll <Plug>(easymotion-E)
 
 let g:EasyMotion_re_line_anywhere = '.'
-map gh <Plug>(easymotion-bl)
-map gl <Plug>(easymotion-wl)
 map gH <Plug>(easymotion-linebackward)
 map gL <Plug>(easymotion-lineforward)
 " }}}
