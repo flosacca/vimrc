@@ -839,7 +839,7 @@ endf
 
 func! EchoErr(msg)
   echoh ErrorMsg
-  echom a:msg
+  echom (a:msg =~# '^E\d\+:' ? '' : 'Error: ') . a:msg
   echoh None
 endf
 
@@ -1040,6 +1040,8 @@ func! Restart()
     let path = FindUpward('.restart')
     if !empty(path)
       call system('touch ' . shellescape(path))
+    else
+      EchoErr 'Nothing to restart'
     end
   end
 endf
