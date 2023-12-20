@@ -1194,6 +1194,8 @@ func! SeamlessJoinImpl() range
   call setline(a:firstline, getline(a:firstline) . text)
 endf
 
+com! -bar -range J call SeamlessJoin(<line1>, <line2>)
+
 func! Unwrap(first, last)
   let range = a:first . ',' . a:last
   let reg = @"
@@ -1206,7 +1208,7 @@ func! Unwrap(first, last)
   sil exe range . 'd _'
 endf
 
-com! -bar -range J call Unwrap(<line1>, <line2>)
+com! -bar -range Unwrap call Unwrap(<line1>, <line2>)
 
 func! Clip(val)
   try
