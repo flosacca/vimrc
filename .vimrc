@@ -621,7 +621,7 @@ func! FileTypeConfig()
     setl ts=4
   end
 
-  if &ft =~ '\v^(make|caddyfile)$'
+  if &ft =~ '\v^(make|caddyfile|gitconfig)$'
     setl noet
   end
 
@@ -1202,14 +1202,28 @@ endf
 func! ChangeSurround(key, sub)
   let obj = GetTextObj(a:key)
   let reg = @"
-  let @" = a:sub[0] . LStrip(obj[1][0], '\S*')
+  let @" = a:sub[0] . LStrip(obj[1][0], '[^[:space:]]*')
         \ . obj[1][1]
-        \ . RStrip(obj[1][2], '\S*') . a:sub[1]
+        \ . RStrip(obj[1][2], '[^[:space:]]*') . a:sub[1]
   call setpos("'<", obj[0][0])
   call setpos("'>", obj[0][1])
   normal! gvp
   let @" = reg
 endf
+
+func! Swap(first, last, s1, s2, mode)
+  let pos = getpos('.')
+  let sub = 'sil! ' . a:first . ',' . a:last . 's'
+  let p1 = a:mode ? '\<' . a:s1 . '\>' : a:s1
+  let p2 = a:mode ? '\<' . a:s2 . '\>' : a:s2
+  exe printf('%s#%s#@@swap@@#g', sub, p2)
+  exe printf('%s#%s#%s#g', sub, p1, a:s2)
+  exe printf('%s#@@swap@@#%s#g', sub, a:s1)
+  call setpos('.', pos)
+endf
+
+com! -bar -range -nargs=+ Swapw call Swap(<line1>, <line2>, <f-args>, 1)
+com! -bar -range -nargs=+ Swap call Swap(<line1>, <line2>, <f-args>, 0)
 
 func! SeamlessJoin(first, last)
   let pos = getpos('.')
