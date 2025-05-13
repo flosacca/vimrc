@@ -985,7 +985,7 @@ endf
 let g:cpp_std = 17
 let g:c_std = 99
 
-let g:cxxflags = []
+let g:cxxflags = ['-Wno-unused-result']
 let g:cflags = []
 let g:ldlibs = []
 if s:win
