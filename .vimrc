@@ -421,7 +421,7 @@ nm <Space>] <Plug>(altr-back)
 
 " ---------------------------- }}}
 
-" View ----------------------- {{{
+" Appearance ----------------- {{{
 
 se nu
 se ru
@@ -429,6 +429,13 @@ se nowrap
 se fdm=marker
 se ls=2
 se nosmd
+
+if has('terminal')
+  aug terminal_window
+    au!
+    au TerminalWinOpen * setl nonu
+  aug END
+end
 
 aug gui_config
   au!
@@ -521,7 +528,7 @@ aug END
 
 " ---------------------------- }}}
 
-" Format --------------------- {{{
+" Filetype-specific ---------- {{{
 
 se ts=2
 se sw=0
