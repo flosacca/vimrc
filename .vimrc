@@ -671,9 +671,14 @@ func! FileTypeConfig()
   end
 
   if &ft == 'rust'
-    call LSMap('nn', '<F7>', ['up', 'Ctest'], 0)
-    call LSMap('nn', '<F8>', ['up', 'exe "Crun " . g:run_args'], 0)
-    call LSMap('nn', '<F9>', ['up', 'exe "Crun " . g:run_args'], 0)
+    if ShellStatus('cargo read-manifest') == 0
+      call LSMap('nn', '<F7>', ['up', 'Ctest'], 0)
+      call LSMap('nn', '<F8>', ['up', 'exe "Crun " . g:run_args'], 0)
+      call LSMap('nn', '<F9>', ['up', 'exe "Crun " . g:run_args'], 0)
+    else
+      call LSMap('nn', '<F7>', 'Compile()', 1)
+      call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
+    end
   end
 
   if &ft =~ '^s[ca]ss$'
@@ -814,6 +819,11 @@ aug END
 " Functions ------------------ {{{
 
 " Utils ---------------------- {{{
+func! ShellStatus(cmd)
+  call system(a:cmd)
+  return v:shell_error
+endf
+
 func! Strip(str, ...)
   let pat = get(a:, 1, '\_s*')
   return substitute(a:str, '\v%^' . pat . '(.{-})' . pat . '%$', '\1', '')
@@ -1014,6 +1024,8 @@ func! Compile(...)
       end
       exe '!' . join([bin] + flags + ['-o "%<" "%"'] + g:ldlibs)
     end
+  elseif &ft == 'rust'
+    !rustc "%"
   elseif &ft == 'java'
     !javac "%"
   elseif &ft == 'cuda'
@@ -1030,7 +1042,7 @@ endf
 let g:run_args = ''
 
 func! Run()
-  if &ft =~ '\v^(c|cpp|cuda|masm)$'
+  if &ft =~ '\v^(c|cpp|rust|cuda|masm)$'
     if !Make('run')
       exe '!"./%<" ' . g:run_args
     end
