@@ -1241,6 +1241,15 @@ func! Swap(first, last, s1, s2, mode)
   call setpos('.', pos)
 endf
 
+func! Subw(first, last, s1, s2)
+  let pos = getpos('.')
+  let sub = 'sil! ' . a:first . ',' . a:last . 's'
+  let p1 = '\<' . a:s1 . '\>'
+  exe printf('%s#%s#%s#g', sub, p1, a:s2)
+  call setpos('.', pos)
+endf
+
+com! -bar -range -nargs=+ Sw call Subw(<line1>, <line2>, <f-args>)
 com! -bar -range -nargs=+ Swapw call Swap(<line1>, <line2>, <f-args>, 1)
 com! -bar -range -nargs=+ Swap call Swap(<line1>, <line2>, <f-args>, 0)
 
