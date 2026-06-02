@@ -42,6 +42,18 @@ aug detect_stdin
   au BufWrite * unl! b:stdin
 aug END
 
+let s:term_colored = !s:gui && $TERM =~# '\v<(256color|direct)>'
+let s:enable_pretty_scheme = s:gui || s:term_colored
+
+let s:true_color = s:gui
+if s:term_colored && has('termguicolors')
+      \ && (empty($TMUX) || system('tmux info') =~# '\v<Tc>[^\n]*<true>')
+  let s:true_color = 1
+  let &t_8f = "\e[38;2;%lu;%lu;%lum"
+  let &t_8b = "\e[48;2;%lu;%lu;%lum"
+  se tgc
+end
+
 " ---------------------------- }}}
 
 " Global Mappings ------------ {{{
@@ -227,7 +239,10 @@ Plug 'dylon/vim-antlr'
 Plug 'flosacca/nginx.vim'
 Plug 'isobit/vim-caddyfile'
 Plug 'flosacca/Dockerfile.vim'
-Plug 'gko/vim-coloresque'
+if s:true_color
+  " Plug 'gko/vim-coloresque'
+  Plug 'ap/vim-css-color'
+end
 if s:vim8
   Plug 'ionide/Ionide-vim'
 end
@@ -477,16 +492,6 @@ func! SetPrettyScheme()
   endt
   return 1
 endf
-
-let s:term_colored = !s:gui && $TERM =~# '\v<(256color|direct)>'
-let s:enable_pretty_scheme = s:gui || s:term_colored
-
-if s:term_colored && has('termguicolors')
-      \ && (empty($TMUX) || system('tmux info') =~# '\v<Tc>[^\n]*<true>')
-  let &t_8f = "\e[38;2;%lu;%lu;%lum"
-  let &t_8b = "\e[48;2;%lu;%lu;%lum"
-  se tgc
-end
 
 " In Vim 8 within the terminal, the file info message gets cleared when
 " applying a color scheme (specifically, on `hi Normal`). We simply disable
