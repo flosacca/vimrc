@@ -234,6 +234,7 @@ Plug 'kevinoid/vim-jsonc'
 Plug 'cespare/vim-toml'
 Plug 'leafOfTree/vim-vue-plugin', { 'tag': 'v1.0.20200714' }
 Plug 'MaxMEllon/vim-jsx-pretty'
+Plug 'vito-c/jq.vim'
 Plug 'rhysd/vim-llvm'
 Plug 'dylon/vim-antlr'
 Plug 'flosacca/nginx.vim'
@@ -683,7 +684,7 @@ func! FileTypeConfig()
     call LSMap('nn', '<F9>', ['call Compile(["-g3"])', 'call Run()'], 1)
   end
 
-  if &ft =~ '\v^(java|cuda|masm|tex)$'
+  if &ft =~ '\v^(java|haskell|cuda|masm|tex)$'
     call LSMap('nn', '<F7>', 'Compile()', 1)
     call LSMap('nn', '<F9>', ['call Compile()', 'call Run()'], 1)
   end
@@ -1002,10 +1003,9 @@ let g:makefile_level = -1
 func! Make(...)
   let makefile = FindUpward('Makefile', g:makefile_level)
   if !empty(makefile)
-    let dir = fnamemodify(makefile, ':h:S')
-    let make = a:0 < 2 ? 'make' : shellescape(a:2)
-    let target = a:0 < 1 ? '' : shellescape(a:1)
-    exe printf('!cd %s && %s %s', dir, make, target)
+    let dir = fnamemodify(makefile, ':h')
+    let make = [get(a:, 2, 'make')] + (a:0 < 1 ? [] : [a:1])
+    exe '!' . join(map([['cd', dir], make], 'ShellCommand(v:val)'), '&&')
     return 1
   end
 endf
@@ -1046,6 +1046,8 @@ func! Compile(...)
     !rustc "%"
   elseif &ft == 'java'
     !javac "%"
+  elseif &ft == 'haskell'
+    !ghc "%"
   elseif &ft == 'cuda'
     !nvcc -o "%<" -Xcompiler /utf-8 "%"
   elseif &ft == 'masm'
@@ -1057,36 +1059,76 @@ func! Compile(...)
   end
 endf
 
-let g:run_args = ''
+func! ShellCommand(argv, ...)
+  let bang = get(a:, 1, 1)
+  return join(map(copy(a:argv), 'shellescape(v:val, bang)'))
+endf
+
+func! GetInterpreter()
+  if &ft == 'python'
+    return ['python3']
+  elseif &ft == 'ruby'
+    return ['ruby']
+  elseif &ft == 'javascript'
+    return ['node']
+  elseif &ft == 'perl'
+    return ['perl']
+  elseif &ft == 'scheme'
+    return ['gosh']
+  elseif &ft == 'awk'
+    return ['awk', '-f']
+  end
+  return []
+endf
+
+let g:base_argv = []
+let g:argv = []
 
 func! Run()
-  if &ft =~ '\v^(c|cpp|rust|cuda|masm)$'
-    if !Make('run')
-      exe '!"./%<" ' . g:run_args
-    end
-  elseif &ft == 'java'
-    exe '!java "%<" ' . g:run_args
-  elseif &ft == 'python'
-    exe '!python3 "%" ' . g:run_args
-  elseif &ft == 'ruby'
-    exe '!ruby "%" ' . g:run_args
-  elseif &ft == 'javascript'
-    exe '!node "%" ' . g:run_args
-  elseif &ft == 'scheme'
-    exe '!gosh "%" ' . g:run_args
-  elseif &ft == 'autohotkey'
-    call WinOpen('"%"', 0)
-  elseif &ft == 'tex'
-    call WinOpen('"%<.pdf"')
-  elseif &ft == 'markdown'
-    MarkdownPreview
-  else
-    if !Make('run')
-      if !s:win || expand('%:e') =~ '\v^(bat|vbs)$'
-        !"./%"
+  let argv = map(copy(g:base_argv), 'expandcmd(v:val)')
+  let win_open = -1
+  if empty(argv)
+    let main = ''
+    if &ft == 'markdown'
+      MarkdownPreview
+    elseif !empty(FindUpward('Rakefile', g:makefile_level))
+      let argv = ['rake']
+    elseif &ft =~ '\v^(c|cpp|rust|haskell|cuda|masm)$'
+      let main = Make('run') ? '' : './%:r'
+    elseif &ft == 'java'
+      let argv = ['java']
+      let main = '%:r'
+    elseif &ft == 'autohotkey'
+      let win_open = 0
+      let main = '%'
+    elseif &ft == 'tex'
+      let win_open = 1
+      let main = '%:r.pdf'
+    else
+      let argv = GetInterpreter()
+      if !empty(argv)
+        let main = '%'
       else
-        call WinOpen('"%"')
+        if !Make('run')
+          if s:win && !(expand('%:e') =~ '\v^(bat|vbs)$')
+            let win_open = 0
+            let main = '%'
+          else
+            let main = './%'
+          end
+        end
       end
+    end
+    if !empty(main)
+      call add(argv, expandcmd(main))
+    end
+  end
+  if !empty(argv)
+    let cmd = ShellCommand(argv + g:argv)
+    if win_open == -1
+      exe '!' . cmd
+    else
+      call WinOpen(cmd, win_open)
     end
   end
 endf
