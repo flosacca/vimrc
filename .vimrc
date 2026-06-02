@@ -7,7 +7,7 @@ se bs=2
 se noswf
 se ffs=unix,dos
 se enc=utf-8
-se fencs=ucs-bom,utf-8,sjis,gb18030,latin1
+se fencs=ucs-bom,utf-8,sjis,gb18030,gbk,latin1
 
 se rtp^=~/.vim
 se rtp+=~/.vim/after
@@ -144,7 +144,7 @@ vn gx g<C-x>
 nn <C-a> ga
 
 nn <silent> <Space>r :redraw!<CR>
-nn <silent> <Space>p :let &paste=!&paste<CR>
+nn <silent> <Space>p :se paste!<CR>
 nn <silent> <Space>. :so ~/.vimrc<CR>
 
 ino <C-\><CR> <End><CR>
@@ -1256,7 +1256,8 @@ func! SeamlessJoinImpl() range
   end
   let lines = getline(a:firstline + 1, a:lastline)
   call deletebufline('%', a:firstline + 1, a:lastline)
-  let text = join(map(lines, 'LStrip(v:val)'), '')
+  call map(lines, 'LStrip(v:val)')
+  let text = join(lines, '')
   call setline(a:firstline, getline(a:firstline) . text)
 endf
 
