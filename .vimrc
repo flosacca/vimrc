@@ -146,6 +146,7 @@ nn <C-a> ga
 nn <silent> <Space>r :redraw!<CR>
 nn <silent> <Space>p :se paste!<CR>
 nn <silent> <Space>. :so ~/.vimrc<CR>
+nn <silent> <Space>c :call ToggleAutoComment()<CR>
 
 ino <C-\><CR> <End><CR>
 ino <C-\><BS> <Up><End><CR>
@@ -539,6 +540,15 @@ se nojs
 
 com! -bar -nargs=1 TS setl ts=<args> | setl sw=0 | setl sts=-1
 
+func! ToggleAutoComment()
+  if &fo =~# 'r' || &fo =~# 'o'
+    setl fo-=r
+    setl fo-=o
+  else
+    setl fo+=ro
+  end
+endf
+
 aug add_file_type
   au!
   au BufRead,FileType * call AddFileType()
@@ -616,8 +626,11 @@ func! FileTypeConfig()
     se shm-=F
   end
 
-  setl fo-=r
-  setl fo-=o
+  if !exists('b:last_ft') || b:last_ft !=# &ft
+    let b:last_ft = &ft
+    setl fo-=r
+    setl fo-=o
+  end
 
   call LSMap('nn', '<Space>s', ['up', 'call Restart()'], 0)
 
