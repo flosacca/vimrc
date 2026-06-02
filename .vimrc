@@ -1235,9 +1235,9 @@ func! Swap(first, last, s1, s2, mode)
   let sub = 'sil! ' . a:first . ',' . a:last . 's'
   let p1 = a:mode ? '\<' . a:s1 . '\>' : a:s1
   let p2 = a:mode ? '\<' . a:s2 . '\>' : a:s2
-  exe printf('%s#%s#@@swap@@#g', sub, p2)
+  exe printf('%s#%s#\n#g', sub, p2)
   exe printf('%s#%s#%s#g', sub, p1, a:s2)
-  exe printf('%s#@@swap@@#%s#g', sub, a:s1)
+  exe printf('%s#\%%d0#%s#g', sub, a:s1)
   call setpos('.', pos)
 endf
 
